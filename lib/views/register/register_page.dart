@@ -10,7 +10,6 @@ class RegisterPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // Thêm 2 dòng này để triệt tiêu hiệu ứng đổi màu khi cuộn
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
@@ -24,14 +23,13 @@ class RegisterPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // --- BỔ SUNG LOGO ---
+              // Logo
               Image.asset(
-                'assets/logo-removebg.png', // Đảm bảo đúng tên file logo của bạn
+                'assets/logo-removebg.png',
                 height: 100,
               ),
               const SizedBox(height: 16),
 
-              // Tiêu đề chính
               const Text(
                 'Tạo Tài Khoản',
                 textAlign: TextAlign.center,
@@ -49,6 +47,7 @@ class RegisterPage extends StatelessWidget {
               ),
               const SizedBox(height: 30),
 
+              // Các trường nhập liệu với dấu * đỏ
               _buildLabel('Họ và Tên'),
               _buildTextField('Nhập họ và tên của bạn'),
               const SizedBox(height: 20),
@@ -66,7 +65,9 @@ class RegisterPage extends StatelessWidget {
               const SizedBox(height: 30),
 
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // Xử lý đăng ký
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4A90E2),
                   foregroundColor: Colors.white,
@@ -101,12 +102,11 @@ class RegisterPage extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
-              // --- ĐIỀU CHỈNH FOOTER IMAGE TO NHƯ TRANG LOGIN ---
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Image.asset(
                   'assets/healthtracking_loginpage.webp',
-                  width: double.infinity, // Chiếm hết chiều ngang giống trang login
+                  width: double.infinity,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -118,15 +118,28 @@ class RegisterPage extends StatelessWidget {
     );
   }
 
+  // Widget hiển thị tiêu đề có dấu * đỏ
   Widget _buildLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF333333),
+      child: RichText(
+        text: TextSpan(
+          text: label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF333333),
+          ),
+          children: const [
+            TextSpan(
+              text: ' *',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
     );

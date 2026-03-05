@@ -19,26 +19,29 @@ class HealthRecordPage extends StatefulWidget {
 
 class _HealthRecordPageState extends State<HealthRecordPage> {
   String selectedValue = 'Huyết Áp';
+  String selectedSort = 'Mới nhất'; // Trạng thái cho bộ lọc thời gian
   int _selectedIndex = 1;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      appBar: const MainHeader(subTitle: "Bản ghi sức khỏe"), // Sử dụng Header đã tách
+      appBar: const MainHeader(subTitle: "Bản ghi sức khỏe"),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: _buildDropdown(),
+              // Hàng chứa 2 bộ lọc
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildSortFilter(), // Filter thời gian (Mới nhất/Cũ nhất)
+                  _buildDropdown(),   // Dropdown chọn loại chỉ số
+                ],
               ),
               const SizedBox(height: 16),
 
-
-              // Bên trong Widget build của màn hình chính:
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -50,7 +53,6 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
                 ),
                 itemCount: 8,
                 itemBuilder: (context, index) {
-                  // Tự động thay đổi dữ liệu dựa trên Dropdown
                   if (selectedValue == 'Huyết Áp') {
                     return const HealthRecordCard(
                       icon: Icons.favorite,
@@ -62,7 +64,7 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
                     );
                   } else if (selectedValue == 'Đường Huyết') {
                     return const HealthRecordCard(
-                      icon: Icons.bloodtype_outlined, // Icon giọt máu
+                      icon: Icons.bloodtype_outlined,
                       title: 'Đường huyết',
                       value: '100',
                       unit: 'mg/dL',
@@ -71,16 +73,16 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
                     );
                   } else if (selectedValue == 'Cân nặng') {
                     return const HealthRecordCard(
-                      icon: Icons.balance, // Icon cái cân
+                      icon: Icons.balance,
                       title: 'Cân nặng',
                       value: '70',
                       unit: 'kg',
                       note: 'Đo trước khi ăn sáng',
                       time: '22:32 30/01/2026',
                     );
-                  } else { // SpO2
+                  } else {
                     return const HealthRecordCard(
-                      icon: Icons.opacity, // SpO2 thường đo ở ngón tay
+                      icon: Icons.opacity,
                       title: 'SpO2',
                       value: '85',
                       unit: '%',
@@ -90,28 +92,22 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
                   }
                 },
               ),
-
-
               const SizedBox(height: 80),
             ],
           ),
         ),
       ),
 
-      // FAB
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddRecordSheet(context),
         backgroundColor: const Color(0xFF3C83F6),
         child: const Icon(Icons.add, color: Colors.white, size: 30),
       ),
 
-      // Footer
       bottomNavigationBar: MainFooter(
-        currentIndex: 1, // Fix cứng là 1 để icon chỉ số luôn sáng ở trang này
+        currentIndex: 1,
         onTap: (index) {
-          if (index == 1) return; // Nếu đang ở trang chỉ số mà bấm lại thì thôi
-
-          // Chuyển trang đơn giản bằng Navigator
+          if (index == 1) return;
           Widget nextPage;
           switch (index) {
             case 0: nextPage = const HomePage(); break;
@@ -121,35 +117,64 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
             case 4: nextPage = const SettingsPage(); break;
             default: nextPage = const HomePage();
           }
-
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => nextPage),
           );
         },
       ),
-
-
     );
   }
 
-  Widget _buildDropdown() {
+  // Widget cho bộ lọc Sắp xếp thời gian
+  Widget _buildSortFilter() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 45,
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: DropdownButton<String>(
-        value: selectedValue,
-        underline: const SizedBox(),
-        dropdownColor: Colors.white,
-        icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-        items: ['Huyết Áp', 'Đường Huyết', 'Cân nặng', 'Sp02']
-            .map((val) => DropdownMenuItem(value: val, child: Text(val)))
-            .toList(),
-        onChanged: (val) => setState(() => selectedValue = val!),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: selectedSort,
+          icon: const Icon(Icons.swap_vert, color: Colors.blue, size: 20),
+          dropdownColor: Colors.white,
+          style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w500),
+          items: ['Mới nhất', 'Cũ nhất']
+              .map((val) => DropdownMenuItem(
+            value: val,
+            child: Text(val),
+          ))
+              .toList(),
+          onChanged: (val) => setState(() => selectedSort = val!),
+        ),
+      ),
+    );
+  }
+
+  // Widget chọn Loại chỉ số (Giữ nguyên logic cũ nhưng bọc trong Row)
+  Widget _buildDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 45,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: selectedValue,
+          dropdownColor: Colors.white,
+          style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w500),
+          icon: const Icon(Icons.filter_list, color: Colors.blue, size: 20),
+          items: ['Huyết Áp', 'Đường Huyết', 'Cân nặng', 'SpO2']
+              .map((val) => DropdownMenuItem(value: val, child: Text(val)))
+              .toList(),
+          onChanged: (val) => setState(() => selectedValue = val!),
+        ),
       ),
     );
   }
@@ -159,7 +184,7 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
       context: context,
       barrierDismissible: true,
       builder: (context) {
-        return const ModalAddRecord(); // Gọi class đã tách
+        return const ModalAddRecord();
       },
     );
   }

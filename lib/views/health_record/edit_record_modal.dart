@@ -46,10 +46,11 @@ class EditRecordModal extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Có dấu *
               _buildInputLabel("Thời điểm đo"),
               _buildInputField(hint: "Chọn lịch", suffixIcon: Icons.calendar_today),
 
-              // Nội dung thay đổi dựa trên title
+              // Nội dung thay đổi dựa trên title - Tất cả đều có dấu *
               if (title == "Huyết áp") ...[
                 _buildInputLabel("Tâm thu (mmHg)"),
                 _buildInputField(hint: "Nhập số liệu"),
@@ -70,7 +71,8 @@ class EditRecordModal extends StatelessWidget {
                 _buildInputField(hint: "Nhập số liệu"),
               ],
 
-              _buildInputLabel("Ghi chú"),
+              // Không có dấu * (truyền isRequired: false)
+              _buildInputLabel("Ghi chú", isRequired: false),
               _buildInputField(hint: "Nhập ghi chú"),
               const SizedBox(height: 20),
             ],
@@ -109,12 +111,29 @@ class EditRecordModal extends StatelessWidget {
     );
   }
 
-  Widget _buildInputLabel(String label) {
+  // Cập nhật hàm Label hỗ trợ dấu * đỏ
+  Widget _buildInputLabel(String label, {bool isRequired = true}) {
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
-      child: Text(
-        label,
-        style: const TextStyle(color: Color(0xFF334155), fontSize: 14),
+      child: RichText(
+        text: TextSpan(
+          text: label,
+          style: const TextStyle(
+            color: Color(0xFF334155),
+            fontSize: 14,
+            fontWeight: FontWeight.w500, // Thêm chút độ đậm cho nhãn
+          ),
+          children: [
+            if (isRequired)
+              const TextSpan(
+                text: ' *',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

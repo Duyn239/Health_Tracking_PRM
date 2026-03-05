@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:health_tracking/views/chart/chart_page.dart';
+import 'package:health_tracking/views/health_record/basic_info_modal.dart';
 import 'package:health_tracking/views/health_record/health_record_page.dart';
 import 'package:health_tracking/views/home/home_page.dart';
 import 'package:health_tracking/views/login/login_page.dart';

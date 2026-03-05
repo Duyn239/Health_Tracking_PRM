@@ -8,8 +8,27 @@ class ModalAddRecord extends StatefulWidget {
 }
 
 class _ModalAddRecordState extends State<ModalAddRecord> {
-  // Đồng bộ giá trị với dropdown ở màn hình chính nếu cần, ở đây mặc định là Huyết áp
   String selectedType = 'Huyết áp';
+
+  // Hàm tiện ích để tạo Label có dấu * đỏ
+  Widget _buildRequiredLabel(String label) {
+    return RichText(
+      text: TextSpan(
+        text: label,
+        style: const TextStyle(
+          color: Color(0xFF334155),
+          fontSize: 13, // Giảm nhẹ size để vừa với layout 3 cột
+          fontWeight: FontWeight.w500,
+        ),
+        children: const [
+          TextSpan(
+            text: ' *',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,14 +112,13 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
                 const SizedBox(height: 16),
 
                 // --- THỜI ĐIỂM ĐO ---
-                const Text('Thời điểm đo',
-                    style: TextStyle(color: Color(0xFF334155), fontSize: 14)),
+                _buildRequiredLabel('Thời điểm đo'),
                 const SizedBox(height: 8),
                 TextField(
                   readOnly: true,
                   decoration: InputDecoration(
                     hintText: 'Chọn ngày giờ',
-                    suffixIcon: const Icon(Icons.calendar_today),
+                    suffixIcon: const Icon(Icons.calendar_today, size: 20),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
@@ -139,7 +157,6 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
                     const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () {
-                        // Xử lý lưu dữ liệu
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
@@ -159,41 +176,64 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
     );
   }
 
-  // Hàm xử lý hiển thị các ô nhập liệu khác nhau
   Widget _buildDynamicFields() {
     if (selectedType == 'Huyết áp') {
       return Row(
         children: [
+          // Tâm thu
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Tâm thu (mmHg)',
-                    style: TextStyle(color: Color(0xFF334155), fontSize: 12)),
+                _buildRequiredLabel('Tâm thu'),
                 const SizedBox(height: 8),
                 TextField(
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
+                    hintText: 'mmHg',
+                    hintStyle: const TextStyle(fontSize: 11),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
+          // Tâm trương
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Tâm trương (mmHg)',
-                    style: TextStyle(color: Color(0xFF334155), fontSize: 12)),
+                _buildRequiredLabel('Tâm trương'),
                 const SizedBox(height: 8),
                 TextField(
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
+                    hintText: 'mmHg',
+                    hintStyle: const TextStyle(fontSize: 11),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Nhịp tim
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildRequiredLabel('Nhịp tim'),
+                const SizedBox(height: 8),
+                TextField(
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'bpm',
+                    hintStyle: const TextStyle(fontSize: 11),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
                 ),
               ],
@@ -202,24 +242,17 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
         ],
       );
     } else {
-      // Xử lý cho Đường huyết, Cân nặng, SpO2 (Chỉ có 1 ô nhập giá trị)
       String label = "";
       switch (selectedType) {
-        case 'Đường huyết':
-          label = "Giá trị (mg/dL)";
-          break;
-        case 'Cân nặng':
-          label = "Giá trị (kg)";
-          break;
-        case 'Sp02':
-          label = "Giá trị (%)";
-          break;
+        case 'Đường huyết': label = "Giá trị (mg/dL)"; break;
+        case 'Cân nặng': label = "Giá trị (kg)"; break;
+        case 'Sp02': label = "Giá trị (%)"; break;
       }
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Color(0xFF334155), fontSize: 14)),
+          _buildRequiredLabel(label),
           const SizedBox(height: 8),
           TextField(
             keyboardType: TextInputType.number,
