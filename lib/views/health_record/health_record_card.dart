@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'delete_record_modal.dart';
 import 'edit_record_modal.dart'; // Import file modal mới

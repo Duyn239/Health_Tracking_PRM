@@ -217,6 +217,7 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
       decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
+          dropdownColor: Colors.white,
           value: selectedSort,
           icon: const Icon(Icons.swap_vert, color: Colors.blue, size: 20),
           items: ['Mới nhất', 'Cũ nhất'].map((val) => DropdownMenuItem(value: val, child: Text(val))).toList(),
@@ -233,6 +234,7 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
       decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
+          dropdownColor: Colors.white,
           value: selectedValue,
           icon: const Icon(Icons.filter_list, color: Colors.blue, size: 20),
           items: ['Huyết áp', 'Đường huyết', 'Cân nặng', 'SpO2'].map((val) => DropdownMenuItem(value: val, child: Text(val))).toList(),
