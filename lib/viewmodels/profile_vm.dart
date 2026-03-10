@@ -19,6 +19,15 @@ class ProfileViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
 
+  /// CẬP NHẬT: Hàm xóa sạch dữ liệu khi Đăng xuất hoặc chuyển tài khoản
+  void clearData() {
+    _userProfile = null;
+    _diseases = [];
+    _isLoading = false;
+    // Lưu ý: Không cần gọi notifyListeners() ở đây nếu dùng ProxyProvider,
+    // vì ProxyProvider sẽ quản lý việc rebuild lại UI.
+  }
+
 
   // Hàm helper xử lý hiển thị "Chưa có" cho Object hoặc chuỗi trống
   String getDisplayValue(dynamic value, {String unit = ""}) {

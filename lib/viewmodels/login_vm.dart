@@ -56,4 +56,9 @@ class LoginViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void logout() {
+    _currentAccount = null; // Đây chính là chìa khóa để ProxyProvider kích hoạt clearData
+    notifyListeners(); // Thông báo để chuỗi Provider thực hiện update
+  }
 }

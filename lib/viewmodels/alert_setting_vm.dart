@@ -27,6 +27,7 @@ class AlertSettingViewModel extends ChangeNotifier {
   /// 2. Hàm Tải dữ liệu từ Service và đổ vào các Controller
   Future<void> loadSettings(int accountId) async {
     _setLoading(true);
+    clearData(); // <--- Xóa sạch dữ liệu cũ ngay khi bắt đầu load cho ID mới
     try {
       final settings = await _service.getAlertSettingsMap(accountId);
 
@@ -69,50 +70,6 @@ class AlertSettingViewModel extends ChangeNotifier {
     }
   }
 
-  // String? validateSettings() {
-  //   // Hàm trợ giúp lấy giá trị số từ controller
-  //   double? getValue(String key) => double.tryParse(controllers[key]?.text ?? '');
-  //
-  //   // --- 1. Kiểm tra nhập liệu trống hoặc sai định dạng ---
-  //   for (var entry in controllers.entries) {
-  //     if (entry.value.text.trim().isEmpty) {
-  //       return "Vui lòng không để trống các ô nhập liệu";
-  //     }
-  //     if (double.tryParse(entry.value.text) == null) {
-  //       return "Dữ liệu tại '${entry.key}' phải là chữ số";
-  //     }
-  //   }
-  //
-  //   // --- 2. Logic Huyết Áp ---
-  //   double sMin = getValue('sys_min')!;
-  //   double sMax = getValue('sys_max')!;
-  //   double dMin = getValue('dia_min')!;
-  //   double dMax = getValue('dia_max')!;
-  //
-  //   if (sMin >= sMax) return "Huyết áp: Tâm thu tối thiểu phải nhỏ hơn tối đa";
-  //   if (dMin >= dMax) return "Huyết áp: Tâm trương tối thiểu phải nhỏ hơn tối đa";
-  //   if (sMin <= dMin) return "Huyết áp: Chỉ số Tâm thu phải lớn hơn Tâm trương";
-  //
-  //   // --- 3. Logic Đường huyết ---
-  //   double gMin = getValue('glu_min')!;
-  //   double gMax = getValue('glu_max')!;
-  //   if (gMin >= gMax) return "Đường huyết: Giá trị tối thiểu phải nhỏ hơn tối đa";
-  //
-  //   // --- 4. Logic Cân nặng ---
-  //   double wMin = getValue('weight_min')!;
-  //   double wMax = getValue('weight_max')!;
-  //   if (wMin >= wMax) return "Cân nặng: Giá trị tối thiểu phải nhỏ hơn tối đa";
-  //   if (wMin <= 0) return "Cân nặng phải lớn hơn 0";
-  //
-  //   // --- 5. Logic SpO2 ---
-  //   double spMin = getValue('spo2_min')!;
-  //   double spMax = getValue('spo2_max')!;
-  //   if (spMin >= spMax) return "SpO2: Giá trị tối thiểu phải nhỏ hơn tối đa";
-  //   if (spMax > 100) return "SpO2 không thể vượt quá 100%";
-  //   if (spMin < 0) return "SpO2 không thể là số âm";
-  //
-  //   return null; // Mọi thứ đều ổn
-  // }
 
   // Map lưu trữ thông báo lỗi cho từng trường (Key khớp với controllers)
   Map<String, String?> errors = {};
@@ -202,6 +159,17 @@ class AlertSettingViewModel extends ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+
+  // xóa data trong các controller để account mới k bị dính data cũ
+  void clearData() {
+    for (var controller in controllers.values) {
+      controller.clear();
+    }
+    errors.clear();
+    _isLoading = false;
+    // Không cần notifyListeners ở đây vì ProxyProvider sẽ xử lý sau đó
   }
 
   // Đừng quên dispose các controller để tránh rò rỉ bộ nhớ (Memory Leak)

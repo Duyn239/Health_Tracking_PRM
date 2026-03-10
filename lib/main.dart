@@ -30,15 +30,13 @@ import 'implementation/repository/health_record_repo_impl.dart';
 import 'implementation/service/health_record_service_impl.dart';
 import 'viewmodels/heath_record_vm.dart';
 
-// --- ALERT SETTING (Mới thêm) ---
-
 // Import Views
 import 'views/login/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Khởi tạo Database trước khi chạy App (tùy chọn nhưng khuyến khích)
+  // Khởi tạo Database trước khi chạy App
   await DatabaseHelper.instance.database;
 
   runApp(
@@ -70,8 +68,15 @@ void main() async {
         ProxyProvider<ProfileRepository, ProfileService>(
           update: (_, profileRepo, __) => ProfileService(profileRepo),
         ),
-        ChangeNotifierProvider(
+        // SỬ DỤNG ProxyProvider: Xóa profile cũ khi đăng xuất
+        ChangeNotifierProxyProvider<LoginViewModel, ProfileViewModel>(
           create: (context) => ProfileViewModel(context.read<ProfileService>()),
+          update: (context, loginVM, profileVM) {
+            if (loginVM.currentAccount == null) {
+              profileVM?.clearData(); // Gọi hàm xóa dữ liệu trong ProfileVM
+            }
+            return profileVM!;
+          },
         ),
 
         // ================= HEALTH RECORD SECTION =================
@@ -80,24 +85,33 @@ void main() async {
           update: (_, recordRepo, profileRepo, __) =>
               HealthRecordService(recordRepo, profileRepo),
         ),
-        ChangeNotifierProvider(
+        // SỬ DỤNG ProxyProvider: Xóa lịch sử bản ghi khi đăng xuất
+        ChangeNotifierProxyProvider<LoginViewModel, HealthRecordViewModel>(
           create: (context) => HealthRecordViewModel(context.read<HealthRecordService>()),
+          update: (context, loginVM, healthVM) {
+            if (loginVM.currentAccount == null) {
+              healthVM?.clearState(); // Gọi hàm xóa dữ liệu trong HealthRecordVM
+            }
+            return healthVM!;
+          },
         ),
 
         // ================= ALERT SETTING SECTION =================
-        // 1. Đăng ký Repository
         Provider<ISettingRepository>(
           create: (_) => SettingRepository(),
         ),
-
-        // 2. Đăng ký Service (Phụ thuộc vào ISettingRepository)
         ProxyProvider<ISettingRepository, ISettingService>(
           update: (_, repo, __) => SettingService(repo),
         ),
-
-        // 3. Đăng ký ViewModel (Phụ thuộc vào ISettingService)
-        ChangeNotifierProvider(
+        // SỬ DỤNG ProxyProvider: Xóa ngưỡng cảnh báo khi đăng xuất
+        ChangeNotifierProxyProvider<LoginViewModel, AlertSettingViewModel>(
           create: (context) => AlertSettingViewModel(context.read<ISettingService>()),
+          update: (context, loginVM, alertVM) {
+            if (loginVM.currentAccount == null) {
+              alertVM?.clearData(); // Gọi hàm xóa các controller trong AlertSettingVM
+            }
+            return alertVM!;
+          },
         ),
       ],
       child: const MyApp(),
