@@ -40,10 +40,13 @@ dependencies:
   # (Tùy chọn) Thư viện giúp lấy đường dẫn thư mục hệ thống (như Documents)
   path_provider: ^2.1.2
 
+  provider: ^6.1.1  # Thêm dòng này
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   url_launcher: ^6.3.0
+  crypto: ^3.0.3
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -72,6 +75,7 @@ flutter:
     - assets/logo-removebg.png
     - assets/healthtracking_loginpage.webp
     - assets/health-tracking-setting.webp
+    - assets/avatar_default.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
