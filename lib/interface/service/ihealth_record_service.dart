@@ -11,10 +11,22 @@ abstract class IHealthRecordService {
     required List<int> diseaseIds,
   });
 
-  // 3. THÊM MỚI: Lấy danh sách bản ghi theo loại (Huyết áp, Đường huyết...)
+  // Lấy toàn bộ bản ghi của 1 account
+  Future<List<Map<String, dynamic>>> getAllRecords(int accountId);
+
+  // Lấy bản ghi theo loại (Huyết áp, Đường huyết, ...)
   Future<List<Map<String, dynamic>>> getRecordsByType(
       int accountId,
       String type,
       {bool descending = true}
       );
+
+  // Thêm bản ghi mới
+  Future<bool> addRecord(Map<String, dynamic> row);
+
+  // Cập nhật bản ghi hiện có
+  Future<bool> updateRecord(Map<String, dynamic> row);
+
+  // Xóa bản ghi
+  Future<bool> deleteRecord(int id);
 }

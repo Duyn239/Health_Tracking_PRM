@@ -1,9 +1,8 @@
 import 'package:flutter/cupertino.dart';
+import '../data/models/health_record.dart';
 import '../data/models/user_profile.dart';
 import '../interface/service/ihealth_record_service.dart';
 
-/// ViewModel quản lý logic cho màn hình Bản ghi sức khỏe (Health Records).
-/// Sử dụng ChangeNotifier để thông báo cho UI cập nhật khi dữ liệu thay đổi.
 class HealthRecordViewModel extends ChangeNotifier {
   final IHealthRecordService _service;
 
@@ -27,9 +26,10 @@ class HealthRecordViewModel extends ChangeNotifier {
 
   /// Kiểm tra yêu cầu thông tin cơ bản khi người dùng vừa vào trang.
   /// Nếu đã hoàn thành, thực hiện tải danh sách bản ghi đầu tiên.
-  Future<void> checkRequirement(int accountId, {
+  Future<void> checkRequirement(
+    int accountId, {
     String type = 'Huyết áp', // Mặc định hiển thị Huyết áp
-    bool descending = true
+    bool descending = true,
   }) async {
     _isLoading = true;
     _isDescending = descending;
@@ -42,7 +42,11 @@ class HealthRecordViewModel extends ChangeNotifier {
 
       // 2. Nếu đã hoàn thành, lấy dữ liệu bản ghi thực tế
       if (isCompleted) {
-        _records = await _service.getRecordsByType(accountId, type, descending: _isDescending);
+        _records = await _service.getRecordsByType(
+          accountId,
+          type,
+          descending: _isDescending,
+        );
       } else {
         _records = []; // Đảm bảo danh sách rỗng nếu chưa đủ thông tin
       }
@@ -55,17 +59,24 @@ class HealthRecordViewModel extends ChangeNotifier {
   }
 
   /// Tải lại danh sách bản ghi khi người dùng thay đổi bộ lọc (Loại bệnh hoặc Sắp xếp).
-  Future<void> fetchRecords(int accountId, String type, {bool? descending}) async {
+  Future<void> fetchRecords(
+    int accountId,
+    String type, {
+    bool? descending,
+  }) async {
     _isLoading = true;
 
     // Cập nhật lại kiểu sắp xếp nếu người dùng chọn từ Dropdown Sort
     if (descending != null) _isDescending = descending;
-
     notifyListeners();
 
     try {
       // Truy vấn dữ liệu thực tế từ Database thông qua Service
-      _records = await _service.getRecordsByType(accountId, type, descending: _isDescending);
+      _records = await _service.getRecordsByType(
+        accountId,
+        type,
+        descending: _isDescending,
+      );
     } catch (e) {
       debugPrint("Lỗi fetchRecords: $e");
       _records = []; // Trả về rỗng để UI hiển thị Empty State
@@ -96,6 +107,7 @@ class HealthRecordViewModel extends ChangeNotifier {
         _needsBasicInfo = false; // Tắt modal/overlay yêu cầu nhập thông tin
         // Tải lại danh sách (thường sẽ là rỗng) để chuẩn bị hiển thị nút Thêm bản ghi
         await fetchRecords(accountId, 'Huyết áp');
+        notifyListeners();
         return true;
       }
       return false;
@@ -118,4 +130,74 @@ class HealthRecordViewModel extends ChangeNotifier {
   }
 
   /// ==================== CRUD ======================
+
+  Future<bool> addNewRecord(HealthRecord record) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      bool success = await _service.addRecord(record.toMap());
+
+      if (success) {
+        // Tải lại danh sách theo loại của bản ghi vừa thêm
+        await fetchRecords(record.accountId, record.type);
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint("Lỗi addNewRecord VM: $e");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+  Future<bool> updateExistingRecord(HealthRecord record) async {
+    if (record.id == null) return false;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      bool success = await _service.updateRecord(record.toMap());
+      if (success) {
+        await fetchRecords(record.accountId, record.type);
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint("Lỗi updateExistingRecord VM: $e");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+  Future<bool> deleteExistingRecord(int id, int accountId, String type) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      bool success = await _service.deleteRecord(id);
+      if (success) {
+        await fetchRecords(accountId, type);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint("Lỗi deleteExistingRecord VM: $e");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
 }

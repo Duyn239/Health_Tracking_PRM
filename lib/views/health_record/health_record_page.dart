@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/heath_record_vm.dart';
 import '../../viewmodels/login_vm.dart';
@@ -143,11 +144,14 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
             ),
         ],
       ),
+
+
       floatingActionButton: needsInfo ? null : FloatingActionButton(
         onPressed: () => _showAddRecordSheet(context),
         backgroundColor: const Color(0xFF3C83F6),
         child: const Icon(Icons.add, color: Colors.white, size: 30),
       ),
+
       bottomNavigationBar: MainFooter(
         currentIndex: 1,
         onTap: (index) {
@@ -186,18 +190,9 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
   }
 
   Widget _renderHealthCardFromDB(Map<String, dynamic> data) {
-    String displayValue = data['value_1'].toString();
-    if (data['value_2'] != null && data['value_2'] != 0) {
-      displayValue = "${data['value_1'].toInt()}/${data['value_2'].toInt()}";
-    }
-
     return HealthRecordCard(
-      icon: _getIconForType(data['type']),
-      title: data['type'],
-      value: displayValue,
-      unit: data['unit'] ?? "",
-      note: data['note'] ?? "Không có ghi chú",
-      time: data['measured_at'] ?? "N/A",
+      data: data, // Truyền nguyên Map dữ liệu từ DB vào đây
+      icon: _getIconForType(data['type'] ?? ""),
     );
   }
 
