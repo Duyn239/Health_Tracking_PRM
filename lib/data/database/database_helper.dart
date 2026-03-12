@@ -285,7 +285,7 @@ class DatabaseHelper {
       case 'Huyết áp':
         double sysMax = thresholds['sys_max'] ?? 135.0;
         double diaMax = thresholds['dia_max'] ?? 85.0;
-        String valStr = "${v1.toInt()}/${v2?.toInt()}";
+        String valStr = "${v1.toInt()}/${v2?.toInt()} mmHg";
 
         if (v1 >= sysMax + 25 || (v2 != null && v2 >= diaMax + 15)) {
           level = 'danger';
@@ -333,7 +333,7 @@ class DatabaseHelper {
 
         if (v1 > wMax + 10 || v1 < wMin - 5) {
           level = 'danger';
-          statusDetail = v1 > wMax ? "Vượt cân nặng ($valStr)" : "Thiếu cân nặng ($valStr)";
+          statusDetail = v1 > wMax ? "Vượt cân ($valStr)" : "Thiếu cân ($valStr)";
           actionRequired = "Cân nặng thay đổi đột ngột. Bạn cần tham vấn chuyên gia dinh dưỡng.";
         } else if (v1 > wMax || v1 < wMin) {
           level = 'warning';
@@ -346,7 +346,7 @@ class DatabaseHelper {
 
       case 'SpO2':
         double spo2Min = thresholds['spo2_min'] ?? 95.0;
-        String valStr = "${v1.toInt()}%";
+        String valStr = "${v1.toStringAsFixed(1)} %";
 
         if (v1 < 90) {
           level = 'danger';
@@ -426,6 +426,17 @@ class DatabaseHelper {
   Future<int> markAsRead(int notificationId) async {
     final db = await instance.database;
     return await db.update('notifications', {'is_read': 1}, where: 'id = ?', whereArgs: [notificationId]);
+  }
+
+  Future<int> deleteReadNotifications(int accountId) async {
+    final db = await instance.database;
+    return await db.rawDelete('''
+    DELETE FROM notifications 
+    WHERE is_read = 1 
+    AND record_id IN (
+      SELECT id FROM health_records WHERE account_id = ?
+    )
+  ''', [accountId]);
   }
 
   // ==========================================================

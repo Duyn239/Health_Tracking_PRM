@@ -92,7 +92,7 @@ class _BasicInfoModalState extends State<BasicInfoModal> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: false, // CHẶN NÚT BACK HỆ THỐNG
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Colors.white,

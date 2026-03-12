@@ -135,13 +135,30 @@ class _HealthRecordPageState extends State<HealthRecordPage> {
             },
           ),
 
+          // if (needsInfo && !isLoading)
+          //   Container(
+          //     color: Colors.black.withOpacity(0.5),
+          //     width: double.infinity,
+          //     height: double.infinity,
+          //     child: const Center(child: BasicInfoModal()),
+          //   ),
+
+          // Tìm đến đoạn cuối của body trong HealthRecordPage.dart
           if (needsInfo && !isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              width: double.infinity,
-              height: double.infinity,
-              child: const Center(child: BasicInfoModal()),
+          // Sử dụng ModalBarrier để chặn mọi tương tác với lớp dưới
+            Stack(
+              children: [
+                ModalBarrier(
+                  dismissible: false, // KHÔNG CHO CHẠM RA NGOÀI ĐỂ TẮT
+                  color: Colors.black.withOpacity(0.5), // Làm mờ nền
+                ),
+                const Center(
+                  child: BasicInfoModal(),
+                ),
+              ],
             ),
+
+
         ],
       ),
 

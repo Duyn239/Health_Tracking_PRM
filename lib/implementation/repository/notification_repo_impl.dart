@@ -21,4 +21,9 @@ class NotificationRepository implements INotificationRepository {
   Future<Map<String, dynamic>?> getNotificationByRecordId(int recordId) async {
     return await _dbHelper.getNotificationByRecordId(recordId);
   }
+
+  @override
+  Future<int> deleteReadNotifications(int accountId) async {
+    return await _dbHelper.deleteReadNotifications(accountId);
+  }
 }

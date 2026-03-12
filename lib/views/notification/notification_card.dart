@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'notification_detail_page.dart'; // Đảm bảo đường dẫn này đúng với file chi tiết bạn vừa tạo
+import 'package:provider/provider.dart';
+import '../../data/models/notification.dart';
+import '../../viewmodels/notification_vm.dart';
+import 'notification_detail_page.dart';
 
-/// trang tạo ra các card thông báo
 class NotificationCard extends StatelessWidget {
-  final Map<String, dynamic> data;
+  final AppNotification notification;
 
-  const NotificationCard({super.key, required this.data});
+  const NotificationCard({super.key, required this.notification});
 
   @override
   Widget build(BuildContext context) {
@@ -13,24 +15,28 @@ class NotificationCard extends StatelessWidget {
     Color iconColor;
     Color tagColor;
     Color tagTextColor = Colors.white;
+    String statusText;
 
-    // Thiết lập giao diện dựa trên loại thông báo
-    switch (data["type"]) {
-      case "Nguy hiểm":
+    // Logic mapping UI dựa trên level từ Database
+    switch (notification.level) {
+      case "danger":
         iconData = Icons.dangerous;
         iconColor = Colors.red;
         tagColor = const Color(0xFFDE3B40);
+        statusText = "Nguy hiểm";
         break;
-      case "Cần chú ý":
+      case "warning":
         iconData = Icons.warning_amber_rounded;
         iconColor = const Color(0xFFEFB034);
         tagColor = const Color(0xFFEFB034);
         tagTextColor = Colors.black;
+        statusText = "Cần chú ý";
         break;
-      default: // Ổn định
+      default: // stable
         iconData = Icons.check_circle;
         iconColor = const Color(0xFF20BD54);
         tagColor = const Color(0xFF20BD54);
+        statusText = "Ổn định";
     }
 
     return Container(
@@ -52,12 +58,12 @@ class NotificationCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(iconData, color: iconColor, size: 24),
+              Icon(iconData, color: iconColor, size: 23),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  data["title"],
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  notification.title,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
               Container(
@@ -67,42 +73,47 @@ class NotificationCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
-                  data["type"],
-                  style: TextStyle(color: tagTextColor, fontSize: 13, fontWeight: FontWeight.w600),
+                  statusText,
+                  style: TextStyle(color: tagTextColor, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
-            data["content"],
+            notification.content,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 14, color: Color(0xFF4B5563), height: 1.5),
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(data["time"], style: const TextStyle(fontSize: 13, color: Colors.grey)),
+              // Format lại thời gian (Ví dụ: 2026-01-30T22:32:00 -> 22:32 30/01/2026)
+              Text(
+                  _formatDateTime(notification.createdAt),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)
+              ),
               Row(
                 children: [
                   Icon(
-                    data["isRead"] ? Icons.visibility : Icons.visibility_off,
+                    notification.isRead == 1 ? Icons.visibility : Icons.visibility_off,
                     size: 16,
                     color: const Color(0xFF565D6D),
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    data["isRead"] ? "Đã xem" : "Chưa xem",
-                    style: const TextStyle(fontSize: 14, color: Color(0xFF565D6D)),
+                    notification.isRead == 1 ? "Đã xem" : "Chưa xem",
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF565D6D)),
                   ),
                   const SizedBox(width: 12),
-                  // Bọc nút bấm bằng GestureDetector để bắt sự kiện click
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => NotificationDetailPage(data: data),
+                          builder: (context) => NotificationDetailPage(notification: notification),
                         ),
                       );
                     },
@@ -117,6 +128,15 @@ class NotificationCard extends StatelessWidget {
     );
   }
 
+  String _formatDateTime(String isoString) {
+    try {
+      DateTime dt = DateTime.parse(isoString);
+      return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+    } catch (e) {
+      return isoString;
+    }
+  }
+
   Widget _buildDetailButton() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -126,11 +146,7 @@ class NotificationCard extends StatelessWidget {
       ),
       child: const Text(
         "Xem chi tiết",
-        style: TextStyle(
-            color: Colors.black,
-            fontSize: 13,
-            fontWeight: FontWeight.w500
-        ),
+        style: TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w500),
       ),
     );
   }

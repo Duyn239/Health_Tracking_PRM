@@ -42,4 +42,14 @@ class NotificationService implements INotificationService {
       return null;
     }
   }
+
+  @override
+  Future<bool> deleteReadNotifications(int accountId) async {
+    try {
+      int result = await _notificationRepo.deleteReadNotifications(accountId);
+      return result >= 0; // Trả về true nếu thực thi thành công (dù có bản ghi bị xóa hay không)
+    } catch (e) {
+      return false;
+    }
+  }
 }

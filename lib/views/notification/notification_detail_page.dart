@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../data/models/notification.dart';
+import '../../viewmodels/notification_vm.dart';
 import '../chart/chart_page.dart';
 import '../header/main_header.dart';
 import '../footer/main_footer.dart';
@@ -7,33 +10,54 @@ import '../home/home_page.dart';
 import '../setting/settings_page.dart';
 import 'notification_page.dart';
 
-
-/// trang xem chi tiết thông báo
 class NotificationDetailPage extends StatelessWidget {
-  final Map<String, dynamic> data;
+  final AppNotification notification; // Nhận vào Model thay vì Map
 
-  const NotificationDetailPage({super.key, required this.data});
+  const NotificationDetailPage({super.key, required this.notification});
 
   @override
   Widget build(BuildContext context) {
+    // 1. Xác định giao diện dựa trên level của notification
+    IconData iconData;
+    Color themeColor;
+    String statusLabel;
+
+    switch (notification.level) {
+      case "danger":
+        iconData = Icons.dangerous;
+        themeColor = Colors.red;
+        statusLabel = "Nguy hiểm";
+        break;
+      case "warning":
+        iconData = Icons.warning_amber_rounded;
+        themeColor = const Color(0xFFEFB034);
+        statusLabel = "Cần chú ý";
+        break;
+      default:
+        iconData = Icons.check_circle;
+        themeColor = const Color(0xFF20BD54);
+        statusLabel = "Ổn định";
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      appBar: const MainHeader(subTitle: 'Thông cáo kết quả'),
+      appBar: const MainHeader(subTitle: 'Chi tiết thông báo'),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Nút Quay về trang trước
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: GestureDetector(
+            child: InkWell(
               onTap: () => Navigator.pop(context),
-              child: Row(
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.arrow_back_ios, color: Color(0xFF379AE6), size: 14),
-                  const SizedBox(width: 4),
-                  const Text(
-                    "Quay về trang trước",
-                    style: TextStyle(color: Color(0xFF379AE6), fontSize: 14),
+                  Icon(Icons.arrow_back_ios, color: Color(0xFF379AE6), size: 14),
+                  SizedBox(width: 4),
+                  Text(
+                    "Quay về",
+                    style: TextStyle(color: Color(0xFF379AE6), fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -52,54 +76,54 @@ class NotificationDetailPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min, // Để card co theo nội dung
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Tiêu đề, Icon và Tag
                       Row(
                         children: [
-                          const Icon(Icons.dangerous, color: Colors.red, size: 24),
-                          const SizedBox(width: 8),
-                          const Text(
-                            "Huyết áp cao",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          Icon(iconData, color: themeColor, size: 28),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              notification.title,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
                           ),
-                          const Spacer(),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDE3B40),
+                              color: themeColor,
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text(
-                              "Nguy hiểm",
-                              style: TextStyle(color: Colors.white, fontSize: 13),
+                            child: Text(
+                              statusLabel,
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      // Thời gian thẳng hàng tiêu đề
+                      const SizedBox(height: 6),
+                      // Hiển thị thời gian thực từ Model
                       Text(
-                        data["time"] ?? "22:32 30/01/2026",
+                        _formatDateTime(notification.createdAt),
                         style: const TextStyle(fontSize: 13, color: Colors.grey),
                       ),
 
                       const SizedBox(height: 24),
 
-                      // Chữ Mô tả chi tiết căn giữa
                       const Center(
                         child: Text(
-                          "Mô tả chi tiết",
+                          "Nội dung phân tích",
                           style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF379AE6)
                           ),
@@ -108,19 +132,30 @@ class NotificationDetailPage extends StatelessWidget {
 
                       const SizedBox(height: 16),
 
-                      // Nội dung chi tiết
-                      const Text(
-                        "Hệ thống phát hiện huyết áp tâm thu của bệnh nhân Duy tăng lên 160 mmHg, vượt ngưỡng an toàn là 140 mmHg. Huyết áp tâm trương cũng đạt 95 mmHg, vượt ngưỡng 90 mmHg. Tình trạng này có thể báo hiệu nguy cơ tăng huyết áp cấp tính hoặc phản ứng bất lợi với thuốc. Cần theo dõi sát sao và can thiệp y tế ngay lập tức.",
-                        style: TextStyle(fontSize: 14, color: Colors.black, height: 1.5),
+                      // Nội dung chi tiết lấy từ Model content
+                      Text(
+                        notification.content,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFF374151),
+                            height: 1.6
+                        ),
+                        textAlign: TextAlign.justify,
                       ),
 
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 32),
 
-                      // Nút Xác nhận đã xem
+                      // Nút Xác nhận đã xem và Đánh dấu trong DB
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () async {
+                            // Gọi ViewModel để đánh dấu đã đọc trong Database
+                            if (notification.id != null) {
+                              await context.read<NotificationViewModel>().markAsRead(notification.id!);
+                            }
+                            if (context.mounted) Navigator.pop(context);
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF379AE6),
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -130,8 +165,8 @@ class NotificationDetailPage extends StatelessWidget {
                             elevation: 0,
                           ),
                           child: const Text(
-                            "Xác nhận đã xem",
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            "XÁC NHẬN ĐÃ XEM",
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1),
                           ),
                         ),
                       ),
@@ -147,23 +182,31 @@ class NotificationDetailPage extends StatelessWidget {
         currentIndex: 3,
         onTap: (index) {
           if (index == 3) return;
-          // Chuyển trang đơn giản bằng Navigator
-          Widget nextPage;
-          switch (index) {
-            case 0: nextPage = const HomePage(); break;
-            case 1: nextPage = const HealthRecordPage(); break;
-            case 2: nextPage = const ChartPage(); break;
-            case 3: nextPage = const NotificationPage(); break;
-            case 4: nextPage = const SettingsPage(); break;
-            default: nextPage = const HomePage();
-          }
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => nextPage),
-          );
+          _navigateTo(context, index);
         },
       ),
     );
+  }
+
+  String _formatDateTime(String isoString) {
+    try {
+      DateTime dt = DateTime.parse(isoString);
+      return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+    } catch (e) {
+      return isoString;
+    }
+  }
+
+  void _navigateTo(BuildContext context, int index) {
+    Widget nextPage;
+    switch (index) {
+      case 0: nextPage = const HomePage(); break;
+      case 1: nextPage = const HealthRecordPage(); break;
+      case 2: nextPage = const ChartPage(); break;
+      case 3: nextPage = const NotificationPage(); break;
+      case 4: nextPage = const SettingsPage(); break;
+      default: nextPage = const HomePage();
+    }
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => nextPage));
   }
 }
