@@ -81,57 +81,16 @@ class AlertSettingViewModel extends ChangeNotifier {
   }
 
   bool validateSettings() {
-    // 1. Xóa toàn bộ lỗi cũ trước khi kiểm tra
-    errors.clear();
+    // 1. Thu thập dữ liệu từ các Controller thành Map<String, String>
+    Map<String, String> inputData = controllers.map((key, controller) => MapEntry(key, controller.text));
 
-    double? getValue(String key) => double.tryParse(controllers[key]?.text ?? '');
+    // 2. Gọi Service check logic
+    final result = _service.validateAlertSettings(inputData);
 
-    // --- 2. Kiểm tra nhập liệu trống ---
-    controllers.forEach((key, controller) {
-      if (controller.text.trim().isEmpty) {
-        errors[key] = "Không được để trống";
-      } else if (double.tryParse(controller.text) == null) {
-        errors[key] = "Phải là chữ số";
-      }
-    });
-
-    // Nếu đã có lỗi trống thì dừng để người dùng nhập đủ đã, tránh lỗi logic bên dưới
-    if (errors.isNotEmpty) {
-      notifyListeners();
-      return false;
-    }
-
-    // --- 3. Logic Huyết Áp ---
-    double sMin = getValue('sys_min')!;
-    double sMax = getValue('sys_max')!;
-    double dMin = getValue('dia_min')!;
-    double dMax = getValue('dia_max')!;
-
-    if (sMin >= sMax) errors['sys_min'] = "Tâm thu: Min ≥ Max";
-    if (dMin >= dMax) errors['dia_min'] = "Tâm trương: Min ≥ Max";
-    if (sMin <= dMin) errors['sys_min'] = "Tâm thu phải > Tâm trương";
-
-    // --- 4. Logic Đường huyết ---
-    if (getValue('glu_min')! >= getValue('glu_max')!) {
-      errors['glu_min'] = "Giá trị Min ≥ Max";
-    }
-
-    // --- 5. Logic Cân nặng ---
-    double wMin = getValue('weight_min')!;
-    if (wMin >= getValue('weight_max')!) errors['weight_min'] = "Giá trị Min ≥ Max";
-    if (wMin <= 0) errors['weight_min'] = "Cân nặng phải > 0";
-
-    // --- 6. Logic SpO2 ---
-    double spMin = getValue('spo2_min')!;
-    double spMax = getValue('spo2_max')!;
-    if (spMin >= spMax) errors['spo2_min'] = "Giá trị Min ≥ Max";
-    if (spMax > 100) errors['spo2_max'] = "SpO2 không quá 100%";
-    if (spMin < 0) errors['spo2_min'] = "Không được là số âm";
-
-    // Cập nhật giao diện để hiện chữ đỏ
+    // 3. Cập nhật kết quả lỗi lên UI
+    errors = result;
     notifyListeners();
 
-    // Trả về true nếu không có bất kỳ lỗi nào
     return errors.isEmpty;
   }
 

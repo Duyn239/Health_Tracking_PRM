@@ -13,4 +13,6 @@ abstract class ISettingService {
     UserProfile profile,
     List<int> diseaseIds,
   );
+
+  Map<String, String> validateAlertSettings(Map<String, String> inputData);
 }

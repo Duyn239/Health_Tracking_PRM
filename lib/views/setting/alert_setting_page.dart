@@ -266,10 +266,20 @@ class _AlertSettingPageState extends State<AlertSettingPage> {
       children: [
         ElevatedButton(
           // Vô hiệu hóa nút nếu chưa có profile
-          onPressed: hasBasicInfo ? () {
+          onPressed: hasBasicInfo ? () async {
+            if (isEditing) {
+              // --- TRƯỜNG HỢP ẤN "HỦY" ---
+              // 1. Nếu có accountId, nạp lại dữ liệu cũ từ DB để ghi đè các thay đổi tạm thời
+              if (accountId != null) {
+                await alertVM.loadSettings(accountId);
+              }
+              // 2. Xóa sạch các thông báo lỗi validate cũ
+              alertVM.clearErrors();
+            }
+
+            // 3. Chuyển đổi trạng thái giữa Chỉnh sửa <-> Xem
             setState(() {
               isEditing = !isEditing;
-              if (!isEditing) alertVM.clearErrors();
             });
           } : null,
 
@@ -295,24 +305,34 @@ class _AlertSettingPageState extends State<AlertSettingPage> {
         ElevatedButton(
           onPressed: (isEditing && accountId != null && hasBasicInfo)
               ? () async {
+            // Thực hiện validate qua Service (như đã tách logic trước đó)
             if (alertVM.validateSettings()) {
               bool success = await alertVM.saveAllSettings(accountId);
               if (success && mounted) {
                 setState(() => isEditing = false);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Lưu cấu hình thành công"), backgroundColor: Colors.green),
+                  const SnackBar(
+                    content: Text("Lưu cấu hình thành công"),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                  ),
                 );
               }
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Vui lòng kiểm tra các ô báo lỗi"), backgroundColor: Colors.redAccent),
+                const SnackBar(
+                  content: Text("Vui lòng kiểm tra các ô báo lỗi"),
+                  backgroundColor: Colors.redAccent,
+                  behavior: SnackBarBehavior.floating,
+                ),
               );
             }
           } : null,
 
-
           style: ElevatedButton.styleFrom(
-            backgroundColor: (isEditing && hasBasicInfo) ? const Color(0xFF379AE6) : Colors.grey.shade300,
+            backgroundColor: (isEditing && hasBasicInfo)
+                ? const Color(0xFF379AE6)
+                : Colors.grey.shade300,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           child: const Text("Lưu cấu hình", style: TextStyle(color: Colors.white)),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-
 class MenuCard extends StatelessWidget {
   final String title;
   final String value;
   final String unit;
   final String time;
+  final String? note; // Thêm trường note
   final String? heartRate;
   final IconData icon;
   final Color color;
@@ -16,6 +16,7 @@ class MenuCard extends StatelessWidget {
     required this.value,
     required this.unit,
     required this.time,
+    this.note, // Thêm vào constructor
     this.heartRate,
     required this.icon,
     required this.color,
@@ -51,7 +52,7 @@ class MenuCard extends StatelessWidget {
                     title,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       color: Colors.grey.shade600,
                       fontWeight: FontWeight.w600,
                     ),
@@ -59,10 +60,9 @@ class MenuCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 6),
 
-            const SizedBox(height: 8), // Khoảng cách nhỏ sau tiêu đề
-
-            // 2. GIÁ TRỊ CHÍNH (Đã đẩy lên cao hơn)
+            // 2. GIÁ TRỊ CHÍNH
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
@@ -70,7 +70,7 @@ class MenuCard extends StatelessWidget {
                 text: TextSpan(
                   text: value,
                   style: const TextStyle(
-                    fontSize: 23,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF323842),
                   ),
@@ -78,7 +78,7 @@ class MenuCard extends StatelessWidget {
                     TextSpan(
                       text: ' $unit',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: Colors.grey.shade500,
                       ),
@@ -88,30 +88,44 @@ class MenuCard extends StatelessWidget {
               ),
             ),
 
-            const Spacer(), // Đẩy toàn bộ phần thông tin phụ xuống đáy Card
+            const Spacer(),
 
             // 3. NHỊP TIM (Nếu có)
             if (heartRate != null)
+              Text(
+                "♥ $heartRate",
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+            // 4. GHI CHÚ (Thêm phần này)
+            if (note != null && note!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(bottom: 2),
+                padding: const EdgeInsets.only(top: 2),
                 child: Text(
-                  "Nhịp tim: $heartRate",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF323842),
-                    fontWeight: FontWeight.w500,
+                  note!,
+                  maxLines: 1, // Giới hạn 1 dòng để tránh tràn Card
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.blueGrey.shade400,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
 
-            // 4. THỜI GIAN ĐO
+            const SizedBox(height: 2),
+
+            // 5. THỜI GIAN ĐO
             Text(
               time,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 color: Colors.grey.shade400,
                 fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w500,
               ),
             ),
           ],

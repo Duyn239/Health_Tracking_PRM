@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+
 import '../../viewmodels/login_vm.dart';
 import '../../viewmodels/home_vm.dart';
+import '../../data/models/health_record.dart';
+import '../../data/models/health_tip.dart'; // Đảm bảo import model HealthTip
 
 import '../header/main_header.dart';
 import '../footer/main_footer.dart';
@@ -23,135 +27,199 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Sử dụng addPostFrameCallback để thực hiện việc chuyển dữ liệu giữa 2 VM sau khi frame đầu tiên build xong
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 1. Lấy tên từ LoginViewModel (đã được map từ DB)
       final loginVM = Provider.of<LoginViewModel>(context, listen: false);
-      final fullName = loginVM.tempFullName;
+      final homeVM = Provider.of<HomeViewModel>(context, listen: false);
 
-      // 2. Cập nhật vào HomeViewModel
-      if (fullName != null) {
-        Provider.of<HomeViewModel>(context, listen: false).setUserName(fullName);
+      if (loginVM.tempFullName != null) {
+        homeVM.setUserName(loginVM.tempFullName);
+      }
+
+      final accountId = loginVM.currentAccount?.id;
+      if (accountId != null) {
+        homeVM.fetchLatestHealthData(accountId);
       }
     });
   }
 
-  void _navigateTo(Widget page) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => page),
+  /// Hàm xác định màu Gradient dựa trên LOẠI chỉ số (Type)
+  List<Color> _getTipGradient(String type) {
+    switch (type) {
+      case 'Huyết áp':
+      // Màu đỏ (Gốc đỏ đậm)
+        return [const Color(0xFFEF5350), const Color(0xFFC62828)];
+      case 'Đường huyết':
+      // Màu xanh dương
+        return [const Color(0xFF42A5F5), const Color(0xFF1565C0)];
+      case 'Cân nặng':
+      // Màu xanh lá
+        return [const Color(0xFF66BB6A), const Color(0xFF2E7D32)];
+      case 'SpO2':
+      // Màu vàng cam
+        return [const Color(0xFFFFA726), const Color(0xFFEF6C00)];
+      default:
+      // Màu mặc định (Xám/Xanh nhạt) nếu không khớp loại
+        return [const Color(0xFF90A4AE), const Color(0xFF455A64)];
+    }
+  }
+
+  /// Widget hiển thị danh sách lời khuyên hoặc thông báo trống
+  Widget _buildTipsSection(HomeViewModel homeVM) {
+    if (homeVM.displayTips.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(30),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.lightbulb_circle_outlined, size: 50, color: Colors.grey.shade300),
+            const SizedBox(height: 10),
+            Text(
+              "Chưa có lời khuyên nào",
+              style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              "Hãy thực hiện đo chỉ số sức khỏe để chuyên gia đưa ra lời khuyên cho bạn.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: homeVM.displayTips.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final tip = homeVM.displayTips[index];
+        return HealthTipCard(
+          content: tip.content,
+          gradientColors: _getTipGradient(tip.type),
+        );
+      },
     );
+  }
+
+  Widget _buildDynamicMenuCard(HomeViewModel homeVM, String type) {
+    final HealthRecord? record = homeVM.getRecordByType(type);
+    final Map<String, dynamic> uiConfig = {
+      "Huyết áp": {"icon": Icons.favorite, "color": const Color(0xFFFFE8E8), "iconColor": Colors.redAccent, "defaultUnit": "mmHg"},
+      "Đường huyết": {"icon": Icons.water_drop, "color": const Color(0xFFE3F2FD), "iconColor": const Color(0xFF379AE6), "defaultUnit": "mg/dL"},
+      "Cân nặng": {"icon": Icons.monitor_weight, "color": const Color(0xFFE8F5E9), "iconColor": Colors.green, "defaultUnit": "kg"},
+      "SpO2": {"icon": Icons.bolt, "color": const Color(0xFFFFF3E0), "iconColor": Colors.orangeAccent, "defaultUnit": "%"},
+    };
+
+    final config = uiConfig[type]!;
+
+    if (record == null) {
+      return MenuCard(
+        title: type,
+        value: "---",
+        unit: config['defaultUnit'],
+        time: "Chưa có dữ liệu",
+        icon: config['icon'],
+        color: config['color'],
+        iconColor: config['iconColor'],
+      );
+    }
+
+    String displayValue = type == "Huyết áp"
+        ? "${record.value1.toInt()}/${record.value2?.toInt() ?? 0}"
+        : (record.value1 == record.value1.toInt() ? record.value1.toInt().toString() : record.value1.toStringAsFixed(1));
+
+    String displayTime;
+    try {
+      displayTime = DateFormat('HH:mm dd/MM').format(DateTime.parse(record.measuredAt));
+    } catch (e) {
+      displayTime = record.measuredAt;
+    }
+
+    return MenuCard(
+      title: type,
+      value: displayValue,
+      unit: record.unit,
+      heartRate: record.heartRate != null ? "${record.heartRate} bpm" : null,
+      note: record.note,
+      time: displayTime,
+      icon: config['icon'],
+      color: config['color'],
+      iconColor: config['iconColor'],
+    );
+  }
+
+  void _navigateTo(Widget page) {
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => page));
   }
 
   @override
   Widget build(BuildContext context) {
-    // 3. Lắng nghe HomeViewModel để lấy tên hiển thị
     final homeVM = Provider.of<HomeViewModel>(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      // 4. Cập nhật subTitle từ "chủ nhân" sang tên người dùng thực tế
       appBar: MainHeader(subTitle: 'Xin chào, ${homeVM.userName} !!'),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Chỉ số sức khỏe gần nhất ",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF565D6D)),
-            ),
-            const SizedBox(height: 20),
+      body: homeVM.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+        onRefresh: () async {
+          final loginVM = Provider.of<LoginViewModel>(context, listen: false);
+          if (loginVM.currentAccount?.id != null) {
+            await homeVM.fetchLatestHealthData(loginVM.currentAccount!.id!);
+          }
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Chỉ số sức khỏe gần nhất",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF565D6D)),
+              ),
+              const SizedBox(height: 20),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 15,
+                crossAxisSpacing: 15,
+                childAspectRatio: 1.2,
+                children: [
+                  _buildDynamicMenuCard(homeVM, "Huyết áp"),
+                  _buildDynamicMenuCard(homeVM, "Đường huyết"),
+                  _buildDynamicMenuCard(homeVM, "Cân nặng"),
+                  _buildDynamicMenuCard(homeVM, "SpO2"),
+                ],
+              ),
+              const SizedBox(height: 30),
+              const Text(
+                "Lời khuyên từ chuyên gia",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF565D6D)),
+              ),
+              const SizedBox(height: 15),
 
-            // Lưới hiển thị 4 chỉ số sức khỏe gần nhất
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 15,
-              crossAxisSpacing: 15,
-              childAspectRatio: 1.2,
-              children: const [
-                MenuCard(
-                  title: "Huyết áp",
-                  value: "120/80",
-                  unit: "mmHg",
-                  heartRate: "72bpm",
-                  time: "22:32 30/01/2026",
-                  icon: Icons.favorite,
-                  color: Color(0xFFFFE8E8),
-                  iconColor: Colors.redAccent,
-                ),
-                MenuCard(
-                  title: "Đường huyết",
-                  value: "95",
-                  unit: "mg/dL",
-                  time: "07:15 31/01/2026",
-                  icon: Icons.water_drop,
-                  color: Color(0xFFE3F2FD),
-                  iconColor: Color(0xFF379AE6),
-                ),
-                MenuCard(
-                  title: "Cân nặng",
-                  value: "65.5",
-                  unit: "kg",
-                  time: "08:00 29/01/2026",
-                  icon: Icons.monitor_weight,
-                  color: Color(0xFFE8F5E9),
-                  iconColor: Colors.green,
-                ),
-                MenuCard(
-                  title: "SpO2",
-                  value: "98",
-                  unit: "%",
-                  time: "21:10 30/01/2026",
-                  icon: Icons.bolt,
-                  color: Color(0xFFFFF3E0),
-                  iconColor: Colors.orangeAccent,
-                ),
-              ],
-            ),
+              // Gọi Section hiển thị Tips động
+              _buildTipsSection(homeVM),
 
-            const SizedBox(height: 30),
-            const Text("Lời khuyên từ chuyên gia",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF565D6D))),
-
-            const SizedBox(height: 15),
-
-            const HealthTipCard(
-              content: "Huyết áp của bạn đang ở mức lý tưởng. Hãy duy trì chế độ ăn ít muối và tập thể dục đều đặn.",
-              gradientColors: [Color(0xFFEF5350), Color(0xFFC62828)],
-            ),
-            const SizedBox(height: 12),
-            const HealthTipCard(
-              content: "Chỉ số đường huyết sau ăn của bạn hơi cao. Hãy hạn chế đồ ngọt và tinh bột trắng vào buổi tối.",
-              gradientColors: [Color(0xFF42A5F5), Color(0xFF1565C0)],
-            ),
-            const SizedBox(height: 12),
-            const HealthTipCard(
-              content: "Cân nặng của bạn đã giảm 1kg so với tuần trước. Tuyệt vời! Hãy tiếp tục duy trì cường độ tập luyện này.",
-              gradientColors: [Color(0xFF66BB6A), Color(0xFF2E7D32)],
-            ),
-            const SizedBox(height: 12),
-            const HealthTipCard(
-              content: "Nồng độ Oxy trong máu (SpO2) rất tốt. Nếu bạn cảm thấy khó thở, hãy thực hiện bài tập hít thở sâu.",
-              gradientColors: [Color(0xFFFFA726), Color(0xFFEF6C00)],
-            ),
-            const SizedBox(height: 30),
-          ],
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: MainFooter(
         currentIndex: 0,
         onTap: (index) {
           if (index == 0) return;
-          List<Widget> pages = [
-            const HomePage(),
-            const HealthRecordPage(),
-            const ChartPage(),
-            const NotificationPage(),
-            const SettingsPage()
-          ];
+          List<Widget> pages = [const HomePage(), const HealthRecordPage(), const ChartPage(), const NotificationPage(), const SettingsPage()];
           _navigateTo(pages[index]);
         },
       ),
