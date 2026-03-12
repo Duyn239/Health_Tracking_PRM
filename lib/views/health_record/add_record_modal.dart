@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../data/models/health_record.dart';
 import '../../viewmodels/heath_record_vm.dart';
 import '../../viewmodels/login_vm.dart';
+import '../../viewmodels/notification_vm.dart';
 
 class ModalAddRecord extends StatefulWidget {
   const ModalAddRecord({super.key});
@@ -59,7 +60,6 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
         ),
-
 
         child: Form(
           key: _formKey, // Form quản lý trạng thái lỗi
@@ -141,32 +141,29 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                  child: _buildInputField(
-                      'Tâm thu',
-                      'mmHg',
-                      _val1Controller,
-                          (v) => _validateRange(v, 70, 200, 'chỉ số tâm thu')
-                  )
+                child: _buildInputField(
+                  'Tâm thu',
+                  'mmHg',
+                  _val1Controller,
+                  (v) => _validateRange(v, 70, 200, 'chỉ số tâm thu'),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                  child: _buildInputField(
-                      'Tâm trương',
-                      'mmHg',
-                      _val2Controller,
-                          (v) {
-                        final err = _validateRange(v, 40, 130, 'chỉ số tâm trương');
-                        if (err != null) return err;
+                child: _buildInputField('Tâm trương', 'mmHg', _val2Controller, (
+                  v,
+                ) {
+                  final err = _validateRange(v, 40, 130, 'chỉ số tâm trương');
+                  if (err != null) return err;
 
-                        // So sánh tâm thu và tâm trương
-                        final sys = double.tryParse(_val1Controller.text) ?? 0;
-                        final dia = double.tryParse(v!) ?? 0;
-                        if (dia >= sys && sys > 0) {
-                          return 'Tâm trương phải nhỏ hơn tâm thu';
-                        }
-                        return null;
-                      }
-                  )
+                  // So sánh tâm thu và tâm trương
+                  final sys = double.tryParse(_val1Controller.text) ?? 0;
+                  final dia = double.tryParse(v!) ?? 0;
+                  if (dia >= sys && sys > 0) {
+                    return 'Tâm trương phải nhỏ hơn tâm thu';
+                  }
+                  return null;
+                }),
               ),
             ],
           ),
@@ -175,7 +172,7 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
             'Nhịp tim',
             'bpm',
             _val3Controller,
-                (v) => _validateRange(v, 30, 200, 'nhịp tim'),
+            (v) => _validateRange(v, 30, 200, 'nhịp tim'),
             isIntegerOnly: true, // Thêm flag này để biết là chỉ nhận số nguyên
           ),
         ],
@@ -188,15 +185,18 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
 
     switch (selectedType) {
       case 'Đường huyết':
-        label = "Giá trị Đường huyết"; unit = "mg/dL";
+        label = "Giá trị Đường huyết";
+        unit = "mg/dL";
         validator = (v) => _validateRange(v, 10, 600, 'chỉ số đường huyết');
         break;
       case 'Cân nặng':
-        label = "Cân nặng hiện tại"; unit = "kg";
+        label = "Cân nặng hiện tại";
+        unit = "kg";
         validator = (v) => _validateRange(v, 2, 300, 'trọng lượng cơ thể');
         break;
       case 'SpO2':
-        label = "Chỉ số SpO2"; unit = "%";
+        label = "Chỉ số SpO2";
+        unit = "%";
         validator = (v) => _validateRange(v, 50, 100, 'nồng độ oxy (SpO2)');
         break;
     }
@@ -207,12 +207,12 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
   // --- CÁC WIDGET PHỤ TRỢ ---
 
   Widget _buildInputField(
-      String label,
-      String hint,
-      TextEditingController controller,
-      String? Function(String?)? validator,
-      {bool isIntegerOnly = false} // Mặc định là false cho các chỉ số khác
-      ) {
+    String label,
+    String hint,
+    TextEditingController controller,
+    String? Function(String?)? validator, {
+    bool isIntegerOnly = false, // Mặc định là false cho các chỉ số khác
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -227,7 +227,8 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
           style: const TextStyle(fontSize: 14),
           inputFormatters: [
             isIntegerOnly
-                ? FilteringTextInputFormatter.digitsOnly // Chặn mọi ký tự không phải số (bao gồm dấu . và ,)
+                ? FilteringTextInputFormatter
+                      .digitsOnly // Chặn mọi ký tự không phải số (bao gồm dấu . và ,)
                 : FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
           ],
           decoration: InputDecoration(
@@ -236,7 +237,10 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             errorMaxLines: 2,
             errorStyle: const TextStyle(fontSize: 11, color: Colors.redAccent),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
           ),
           validator: validator,
         ),
@@ -250,7 +254,11 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
       children: [
         const Text(
           'Thêm bản ghi mới',
-          style: TextStyle(color: Color(0xFF379AE6), fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Color(0xFF379AE6),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         Align(
           alignment: Alignment.centerRight,
@@ -274,9 +282,16 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
           decoration: InputDecoration(
             hintText: 'Chọn ngày và giờ đo',
             hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-            suffixIcon: const Icon(Icons.calendar_month, size: 20, color: Color(0xFF379AE6)),
+            suffixIcon: const Icon(
+              Icons.calendar_month,
+              size: 20,
+              color: Color(0xFF379AE6),
+            ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
             errorStyle: const TextStyle(fontSize: 11, color: Colors.redAccent),
           ),
           // --- THÊM VALIDATE Ở ĐÂY ---
@@ -307,7 +322,9 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
                     pickedTime.hour,
                     pickedTime.minute,
                   );
-                  _dateController.text = DateFormat('dd/MM/yyyy HH:mm').format(selectedDateTime);
+                  _dateController.text = DateFormat(
+                    'dd/MM/yyyy HH:mm',
+                  ).format(selectedDateTime);
                 });
               }
             }
@@ -337,7 +354,9 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('Hủy', style: TextStyle(color: Colors.black54)),
           ),
@@ -349,9 +368,17 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF379AE6),
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Lưu bản ghi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Lưu bản ghi',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ],
@@ -362,64 +389,85 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
     if (_formKey.currentState!.validate()) {
       final loginVM = context.read<LoginViewModel>();
       final healthVM = context.read<HealthRecordViewModel>();
-      final accountId = loginVM.currentAccount?.id;
+      final notificationVM = context.read<NotificationViewModel>();
 
+      final accountId = loginVM.currentAccount?.id;
       if (accountId == null) return;
 
-      // Xác định đơn vị dựa trên loại chỉ số
+      // 1. KHAI BÁO BIẾN UNIT TRƯỚC (Đây là phần bạn đang bị thiếu hoặc đặt sai vị trí)
       String unit = "";
       switch (selectedType) {
-        case 'Huyết áp': unit = "mmHg"; break;
-        case 'Đường huyết': unit = "mg/dL"; break;
-        case 'Cân nặng': unit = "kg"; break;
-        case 'SpO2': unit = "%"; break;
+        case 'Huyết áp':
+          unit = "mmHg";
+          break;
+        case 'Đường huyết':
+          unit = "mg/dL";
+          break;
+        case 'Cân nặng':
+          unit = "kg";
+          break;
+        case 'SpO2':
+          unit = "%";
+          break;
       }
 
+      // 2. KHỞI TẠO OBJECT (Lúc này biến 'unit' đã tồn tại và hợp lệ)
       final newRecord = HealthRecord(
         accountId: accountId,
         type: selectedType,
         value1: double.parse(_val1Controller.text),
-        value2: selectedType == 'Huyết áp' ? double.tryParse(_val2Controller.text) : null,
-        heartRate: selectedType == 'Huyết áp' ? int.tryParse(_val3Controller.text) : null,
-        unit: unit, // unit xác định dựa trên selectedType
+        value2: selectedType == 'Huyết áp'
+            ? double.tryParse(_val2Controller.text)
+            : null,
+        heartRate: selectedType == 'Huyết áp'
+            ? int.tryParse(_val3Controller.text)
+            : null,
+        unit: unit, // Đã hết lỗi gạch đỏ
         note: _noteController.text.trim(),
         measuredAt: selectedDateTime.toIso8601String(),
       );
 
+      // 3. THỰC HIỆN LƯU
       bool success = await healthVM.addNewRecord(newRecord);
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
-                Text(
-                  "Đã lưu bản ghi $selectedType thành công !!",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green.shade600,
-            duration: const Duration(seconds: 2),
-          ),
-        );
 
+      if (success && mounted) {
+        // Cập nhật Badge ngay lập tức
+        await notificationVM.refreshUnreadCount(accountId);
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Lưu thành công!")));
         Navigator.pop(context);
       }
     }
   }
 
   Widget _buildLabel(String label) {
-    return Text(label, style: const TextStyle(color: Color(0xFF475569), fontSize: 13, fontWeight: FontWeight.w500));
+    return Text(
+      label,
+      style: const TextStyle(
+        color: Color(0xFF475569),
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    );
   }
 
   Widget _buildRequiredLabel(String label) {
     return RichText(
       text: TextSpan(
         text: label,
-        style: const TextStyle(color: Color(0xFF475569), fontSize: 13, fontWeight: FontWeight.w500),
-        children: const [TextSpan(text: ' *', style: TextStyle(color: Colors.red))],
+        style: const TextStyle(
+          color: Color(0xFF475569),
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        children: const [
+          TextSpan(
+            text: ' *',
+            style: TextStyle(color: Colors.red),
+          ),
+        ],
       ),
     );
   }

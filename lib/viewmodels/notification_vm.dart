@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../interface/service/inotification_service.dart';
 import '../data/models/notification.dart';
 
@@ -7,80 +8,109 @@ class NotificationViewModel extends ChangeNotifier {
 
   NotificationViewModel(this._notificationService);
 
-  // Danh sách thông báo (Dùng cho màn hình danh sách thông báo)
+  // 1. QUẢN LÝ DANH SÁCH & TRẠNG THÁI
   List<AppNotification> _notifications = [];
   List<AppNotification> get notifications => _notifications;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  // 2. QUẢN LÝ SỐ LƯỢNG CHƯA ĐỌC (Badge)
+  int _unreadCount = 0;
+  int get unreadCount => _unreadCount;
+
   // Thông báo mới nhất vừa sinh ra sau khi đo
   AppNotification? _lastGeneratedNotification;
   AppNotification? get lastGeneratedNotification => _lastGeneratedNotification;
 
-  /// 1. Lấy danh sách thông báo (có filter)
-  Future<void> fetchNotifications(int accountId, {String? level, String? type}) async {
+  /// 1. Lấy danh sách thông báo (có filter) và cập nhật Badge
+  Future<void> fetchNotifications(
+    int accountId, {
+    String? level,
+    String? type,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
+    // Lấy danh sách filtered để hiển thị trên UI
     final results = await _notificationService.getFilteredNotifications(
       accountId,
       level: level,
       type: type,
     );
-
     _notifications = results.map((e) => AppNotification.fromMap(e)).toList();
+
+    // Luôn làm mới số lượng chưa đọc dựa trên toàn bộ thông báo của user (không filter)
+    await refreshUnreadCount(accountId);
 
     _isLoading = false;
     notifyListeners();
   }
 
-  /// 2. Đánh dấu đã đọc
-  Future<void> markAsRead(int notificationId) async {
+  /// 2. Hàm chuyên biệt để refresh số lượng Badge
+  /// Thường gọi sau khi thêm bản ghi mới hoặc vừa mở ứng dụng
+  Future<void> refreshUnreadCount(int accountId) async {
+    // Lấy toàn bộ thông báo để đếm chính xác số lượng chưa đọc (is_read = 0)
+    final allNotifications = await _notificationService
+        .getFilteredNotifications(accountId, level: 'all', type: 'all');
+
+    _unreadCount = allNotifications.where((e) => e['is_read'] == 0).length;
+    notifyListeners();
+  }
+
+  /// 3. Đánh dấu đã đọc và giảm số lượng Badge
+  Future<void> markAsRead(int notificationId, int accountId) async {
     bool success = await _notificationService.markAsRead(notificationId);
     if (success) {
-      // Cập nhật local state để UI thay đổi ngay lập tức
+      // Cập nhật local state danh sách hiển thị
       int index = _notifications.indexWhere((n) => n.id == notificationId);
       if (index != -1) {
-        _notifications[index] = AppNotification(
-          id: _notifications[index].id,
-          recordId: _notifications[index].recordId,
-          title: _notifications[index].title,
-          content: _notifications[index].content,
-          level: _notifications[index].level,
-          isRead: 1,
-          createdAt: _notifications[index].createdAt,
-        );
-        notifyListeners();
+        _notifications[index] = _notifications[index].copyWith(isRead: 1);
       }
+
+      // Refresh lại số Badge từ DB
+      await refreshUnreadCount(accountId);
     }
   }
 
-  /// 3. Lấy thông báo sau khi đo (Mấu chốt của bạn)
-  Future<AppNotification?> fetchNotificationAfterRecording(int recordId) async {
+  /// 4. Lấy thông báo sau khi đo (Dùng để hiện Modal ngay sau khi Lưu)
+  Future<AppNotification?> fetchNotificationAfterRecording(
+    int recordId,
+    int accountId,
+  ) async {
     final result = await _notificationService.getResultAfterRecording(recordId);
 
     if (result != null) {
       _lastGeneratedNotification = AppNotification.fromMap(result);
-      notifyListeners();
+
+      // Vì có thông báo mới sinh ra -> Phải tăng số Badge
+      await refreshUnreadCount(accountId);
+
       return _lastGeneratedNotification;
     }
     return null;
   }
 
-  Future<bool> clearReadNotifications(int accountId, {String? level, String? type}) async {
+  /// 5. Dọn dẹp thông báo đã xem
+  Future<bool> clearReadNotifications(
+    int accountId, {
+    String? level,
+    String? type,
+  }) async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      // 1. Thực hiện xóa trong Database thông qua Service
-      bool success = await _notificationService.deleteReadNotifications(accountId);
+      // 1. Thực hiện xóa trong Database
+      bool success = await _notificationService.deleteReadNotifications(
+        accountId,
+      );
 
       if (success) {
-        // 2. Load lại dữ liệu mới nhất từ DB để đồng bộ danh sách hiển thị
-        // Truyền lại level và type để đảm bảo người dùng đang lọc gì thì vẫn hiện cái đó
+        // 2. Load lại dữ liệu để đồng bộ UI và Badge
         await fetchNotifications(accountId, level: level, type: type);
       }
+
       _isLoading = false;
       notifyListeners();
       return success;
@@ -90,5 +120,20 @@ class NotificationViewModel extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+}
+
+// Extension nhỏ để copyWith nhanh hơn (nếu model của bạn chưa có)
+extension AppNotificationExtension on AppNotification {
+  AppNotification copyWith({int? isRead}) {
+    return AppNotification(
+      id: id,
+      recordId: recordId,
+      title: title,
+      content: content,
+      level: level,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt,
+    );
   }
 }
