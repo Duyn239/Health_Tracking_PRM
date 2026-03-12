@@ -34,6 +34,9 @@ import 'implementation/repository/health_record_repo_impl.dart';
 import 'implementation/service/health_record_service_impl.dart';
 import 'viewmodels/heath_record_vm.dart';
 
+// --- CHART ---
+import 'viewmodels/chart_vm.dart';
+
 class AppProviders {
   static List<SingleChildWidget> get providers => [
     // ================= AUTH SECTION =================
@@ -73,9 +76,9 @@ class AppProviders {
     // ================= HEALTH RECORD SECTION =================
     Provider<HealthRecordRepository>(create: (_) => HealthRecordRepository()),
     ProxyProvider2<
-      HealthRecordRepository,
-      ProfileRepository,
-      HealthRecordService
+        HealthRecordRepository,
+        ProfileRepository,
+        HealthRecordService
     >(
       update: (_, recordRepo, profileRepo, __) =>
           HealthRecordService(recordRepo, profileRepo),
@@ -104,20 +107,26 @@ class AppProviders {
     ),
 
     // ================= NOTIFICATION SECTION =================
-    // Trong file app_providers.dart của bạn:
-
-    // 1. Repository
     Provider<INotificationRepository>(create: (_) => NotificationRepository()),
-
-    // 2. Service
     ProxyProvider<INotificationRepository, INotificationService>(
       update: (_, repo, __) => NotificationService(repo),
     ),
-
-    // 3. ViewModel
     ChangeNotifierProvider(
       create: (context) =>
           NotificationViewModel(context.read<INotificationService>()),
+    ),
+
+    // ================= CHART SECTION =================
+    // Inject cả HealthRecordService + ISettingService để lấy ngưỡng cảnh báo
+    ChangeNotifierProxyProvider<LoginViewModel, ChartViewModel>(
+      create: (context) => ChartViewModel(
+        context.read<HealthRecordService>(),  // lấy instance đã có
+        context.read<ISettingService>(),       // lấy instance đã có
+      ),
+      update: (context, loginVM, chartVM) {
+        if (loginVM.currentAccount == null) chartVM?.clearData();
+        return chartVM!;
+      },
     ),
   ];
 }
