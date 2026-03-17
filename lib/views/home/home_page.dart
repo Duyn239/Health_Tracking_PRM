@@ -169,6 +169,7 @@ class _HomePageState extends State<HomePage> {
       body: homeVM.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
+
         onRefresh: () async {
           final loginVM = Provider.of<LoginViewModel>(context, listen: false);
           if (loginVM.currentAccount?.id != null) {

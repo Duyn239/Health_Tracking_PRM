@@ -41,8 +41,8 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!mounted) return;
 
     if (success) {
-      _showSnackBar('Đăng ký thành công !!', const Color(0xFF4A90E2));
-      Future.delayed(const Duration(seconds: 2), () {
+      _showSnackBar('Đăng ký thành công !!', Colors.green);
+      Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,

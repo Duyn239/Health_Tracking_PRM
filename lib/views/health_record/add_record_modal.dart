@@ -34,7 +34,6 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
     _dateController.text = "";
   }
 
-  // --- HÀM VALIDATE CHI TIẾT ---
   String? _validateRange(String? value, double min, double max, String label) {
     if (value == null || value.trim().isEmpty) {
       return 'Vui lòng nhập $label';
@@ -394,7 +393,6 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
       final accountId = loginVM.currentAccount?.id;
       if (accountId == null) return;
 
-      // 1. KHAI BÁO BIẾN UNIT TRƯỚC (Đây là phần bạn đang bị thiếu hoặc đặt sai vị trí)
       String unit = "";
       switch (selectedType) {
         case 'Huyết áp':
@@ -411,7 +409,6 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
           break;
       }
 
-      // 2. KHỞI TẠO OBJECT (Lúc này biến 'unit' đã tồn tại và hợp lệ)
       final newRecord = HealthRecord(
         accountId: accountId,
         type: selectedType,
@@ -422,7 +419,7 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
         heartRate: selectedType == 'Huyết áp'
             ? int.tryParse(_val3Controller.text)
             : null,
-        unit: unit, // Đã hết lỗi gạch đỏ
+        unit: unit,
         note: _noteController.text.trim(),
         measuredAt: selectedDateTime.toIso8601String(),
       );

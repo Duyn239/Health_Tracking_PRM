@@ -50,8 +50,6 @@ class SettingService implements ISettingService {
       final Map<String, dynamic> profileMap = profile.toMap();
 
       // Gọi repository để thực hiện việc tính toán lại (Recalculate)
-      // Lưu ý: Repository nên gọi hàm `updateInitialProfile` hoặc logic tương tự
-      // mà bạn đã viết trong DatabaseHelper trước đó.
       final result = await _repository.resetThresholdsToDefault(
           accountId,
           profileMap,

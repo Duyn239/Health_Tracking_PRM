@@ -10,6 +10,9 @@ class AlertSettingViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  // Map lưu trữ thông báo lỗi cho từng trường (Key khớp với controllers)
+  Map<String, String?> errors = {};
+
   // 1. Quản lý tập trung các Controller để UI không bị reset khi Rebuild
   final Map<String, TextEditingController> controllers = {
     'sys_min': TextEditingController(),
@@ -69,10 +72,6 @@ class AlertSettingViewModel extends ChangeNotifier {
       _setLoading(false);
     }
   }
-
-
-  // Map lưu trữ thông báo lỗi cho từng trường (Key khớp với controllers)
-  Map<String, String?> errors = {};
 
   // Hàm xóa sạch lỗi (Dùng khi ấn Hủy hoặc bắt đầu Validate mới)
   void clearErrors() {

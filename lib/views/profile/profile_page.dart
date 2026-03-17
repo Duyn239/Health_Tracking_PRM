@@ -25,7 +25,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Gọi nạp dữ liệu ngay khi vào trang bằng cách sử dụng accountId từ LoginViewModel
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Context read: chỉ lấy dữ liệu
       // KHÔNG rebuild UI
