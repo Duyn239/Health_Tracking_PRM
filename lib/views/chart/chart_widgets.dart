@@ -95,35 +95,43 @@ class ChartWidgets {
   }
 
   /// Widget thẻ thống kê nhỏ (Trung bình / Gần nhất)
+  /// Widget thẻ thống kê nhỏ (Trung bình / Gần nhất)
   static Widget buildStatCard({
     required String title,
     required String value,
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      // Giảm padding ngang để tránh bị bó hẹp nội dung bên trong
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // Giúp card gọn gàng theo chiều dọc
         children: [
           Text(
             title,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10, // Giảm nhẹ tiêu đề xuống 10
               color: color.withOpacity(0.8),
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              color: color,
-              fontWeight: FontWeight.bold,
+          const SizedBox(height: 4),
+          // Sử dụng FittedBox để tự động scale chữ nếu dữ liệu quá dài (ví dụ "120/80 mmHg")
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 15, // Giảm từ 16 xuống 15
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

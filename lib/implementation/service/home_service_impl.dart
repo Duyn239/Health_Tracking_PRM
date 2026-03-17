@@ -55,7 +55,6 @@ class HomeService implements IHomeService {
     return calculatedTips;
   }
 
-  // Logic xác định Level được chuyển hoàn toàn sang Service
   String _determineLevel(HealthRecord record, Map<String, double> thresholds) {
     double v1 = record.value1;
     double? v2 = record.value2;
