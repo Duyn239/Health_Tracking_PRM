@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../data/models/health_record.dart';
 import '../../viewmodels/heath_record_vm.dart';
 import '../../viewmodels/login_vm.dart';
+import '../../viewmodels/notification_vm.dart';
 
 class DeleteRecordModal extends StatelessWidget {
   final HealthRecord record;
@@ -20,6 +21,8 @@ class DeleteRecordModal extends StatelessWidget {
     final healthVM = context.read<HealthRecordViewModel>();
     final loginVM = context.read<LoginViewModel>();
     final accountId = loginVM.currentAccount?.id;
+    final notificationVM = context.read<NotificationViewModel>();
+
 
     if (accountId == null || record.id == null) return;
 
@@ -31,6 +34,9 @@ class DeleteRecordModal extends StatelessWidget {
     );
 
     if (success && context.mounted) {
+      // Cập nhật Badge ngay lập tức
+      await notificationVM.refreshUnreadCount(accountId);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Đã xóa bản ghi ${record.type} thành công !!"),

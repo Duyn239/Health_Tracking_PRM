@@ -19,11 +19,7 @@ class NotificationViewModel extends ChangeNotifier {
   int _unreadCount = 0;
   int get unreadCount => _unreadCount;
 
-  // Thông báo mới nhất vừa sinh ra sau khi đo
-  AppNotification? _lastGeneratedNotification;
-  AppNotification? get lastGeneratedNotification => _lastGeneratedNotification;
-
-  /// 1. Lấy danh sách thông báo (có filter) và cập nhật Badge
+  /// Lấy danh sách thông báo (có filter) và cập nhật Badge
   Future<void> fetchNotifications(
     int accountId, {
     String? level,
@@ -47,8 +43,7 @@ class NotificationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 2. Hàm chuyên biệt để refresh số lượng Badge
-  /// Thường gọi sau khi thêm bản ghi mới hoặc vừa mở ứng dụng
+  /// refresh số lượng Badge
   Future<void> refreshUnreadCount(int accountId) async {
     // Lấy toàn bộ thông báo để đếm chính xác số lượng chưa đọc (is_read = 0)
     final allNotifications = await _notificationService
@@ -58,7 +53,7 @@ class NotificationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 3. Đánh dấu đã đọc và giảm số lượng Badge
+  /// Đánh dấu đã đọc và giảm số lượng Badge
   Future<void> markAsRead(int notificationId, int accountId) async {
     bool success = await _notificationService.markAsRead(notificationId);
     if (success) {
@@ -73,25 +68,7 @@ class NotificationViewModel extends ChangeNotifier {
     }
   }
 
-  /// 4. Lấy thông báo sau khi đo (Dùng để hiện Modal ngay sau khi Lưu)
-  Future<AppNotification?> fetchNotificationAfterRecording(
-    int recordId,
-    int accountId,
-  ) async {
-    final result = await _notificationService.getResultAfterRecording(recordId);
-
-    if (result != null) {
-      _lastGeneratedNotification = AppNotification.fromMap(result);
-
-      // Vì có thông báo mới sinh ra -> Phải tăng số Badge
-      await refreshUnreadCount(accountId);
-
-      return _lastGeneratedNotification;
-    }
-    return null;
-  }
-
-  /// 5. Dọn dẹp thông báo đã xem
+  /// Dọn dẹp thông báo đã xem
   Future<bool> clearReadNotifications(
     int accountId, {
     String? level,

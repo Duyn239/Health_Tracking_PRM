@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../data/models/health_record.dart';
 import '../../viewmodels/heath_record_vm.dart';
+import '../../viewmodels/login_vm.dart';
+import '../../viewmodels/notification_vm.dart';
 
 class EditRecordModal extends StatefulWidget {
   final HealthRecord record;
@@ -70,7 +72,13 @@ class _EditRecordModalState extends State<EditRecordModal> {
 
   Future<void> _handleUpdate() async {
     if (_formKey.currentState!.validate()) {
+      final loginVM = context.read<LoginViewModel>();
       final healthVM = context.read<HealthRecordViewModel>();
+      final notificationVM = context.read<NotificationViewModel>();
+
+      final accountId = loginVM.currentAccount?.id;
+      if (accountId == null) return;
+
 
       final updatedRecord = HealthRecord(
         id: widget.record.id,
@@ -86,7 +94,11 @@ class _EditRecordModalState extends State<EditRecordModal> {
 
       bool success = await healthVM.updateExistingRecord(updatedRecord);
 
+
       if (success && mounted) {
+        // Cập nhật Badge ngay lập tức
+        await notificationVM.refreshUnreadCount(accountId);
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(

@@ -200,6 +200,9 @@ class _NotificationPageState extends State<NotificationPage> {
                       ),
                   ],
                 ),
+
+
+                /// drown list (type)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
