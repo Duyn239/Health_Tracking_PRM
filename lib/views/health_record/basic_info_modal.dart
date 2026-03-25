@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../data/models/user_profile.dart';
@@ -165,12 +166,18 @@ class _BasicInfoModalState extends State<BasicInfoModal> {
                             TextFormField(
                               controller: _heightController,
                               keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly, // CHỈ cho phép chữ số (0-9)
+                              ],
                               decoration: _inputStyle("VD: 170"),
                               validator: (v) {
                                 if (v == null || v.isEmpty) return "Bắt buộc";
+
                                 final h = double.tryParse(v);
-                                if (h == null) return "Phải là số";
+
+                                if (h == null) return "Số không hợp lệ";
                                 if (h < 50 || h > 250) return "Từ 50-250cm";
+
                                 return null;
                               },
                             ),
@@ -186,8 +193,12 @@ class _BasicInfoModalState extends State<BasicInfoModal> {
                   _buildLabel("4. Cân nặng (kg)"),
                   TextFormField(
                     controller: _weightController,
+                    // Cho phép hiện bàn phím số có dấu chấm
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: _inputStyle("VD: 60.5"),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,1}')),
+                    ],
                     validator: (v) {
                       if (v == null || v.isEmpty) return "Vui lòng nhập cân nặng";
                       final w = double.tryParse(v);

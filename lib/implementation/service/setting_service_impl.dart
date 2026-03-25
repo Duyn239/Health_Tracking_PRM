@@ -63,19 +63,26 @@ class SettingService implements ISettingService {
   }
 
   @override
-  Map<String, String> validateAlertSettings(Map<String, String> inputData) {
+  Map<String, String> validateAlertSettings(Map<String, dynamic> inputData) {
     Map<String, String> errors = {};
 
-    // 1. Hàm helper kiểm tra khoảng giá trị
-    String? checkRange(String value, double min, double max, String label) {
-      if (value.trim().isEmpty) return 'Vui lòng nhập $label';
-      final n = double.tryParse(value);
-      if (n == null) return '$label phải là số';
-      if (n < min || n > max) return '$label từ $min - $max';
+    // 1. Hàm helper kiểm tra khoảng giá trị (Dùng double để cân cả số thực và nguyên)
+    String? checkRange(dynamic value, double min, double max, String label) {
+      final sValue = value?.toString() ?? '';
+      if (sValue.trim().isEmpty) return 'Không được bỏ trống';
+
+      final n = double.tryParse(sValue);
+      if (n == null) return 'Phải là số';
+      if (n < min || n > max) {
+        // Format bỏ đuôi .0 khi hiển thị thông báo lỗi
+        String minStr = min == min.toInt() ? min.toInt().toString() : min.toString();
+        String maxStr = max == max.toInt() ? max.toInt().toString() : max.toString();
+        return 'Phải từ $minStr - $maxStr';
+      }
       return null;
     }
 
-    // 2. Validate định dạng và khoảng an toàn
+    // 2. Cấu hình (Dùng double cho tất cả để đồng nhất)
     final configs = {
       'sys_min': [70.0, 150.0, 'Tâm thu tối thiểu'],
       'sys_max': [100.0, 200.0, 'Tâm thu tối đa'],
@@ -90,22 +97,26 @@ class SettingService implements ISettingService {
     };
 
     configs.forEach((key, config) {
-      final error = checkRange(inputData[key] ?? '', config[0] as double, config[1] as double, config[2] as String);
+      final error = checkRange(inputData[key], config[0] as double, config[1] as double, config[2] as String);
       if (error != null) errors[key] = error;
     });
 
-    // Nếu đã có lỗi định dạng, trả về luôn để tránh lỗi parse số ở bước sau
     if (errors.isNotEmpty) return errors;
 
-    // 3. Kiểm tra logic so sánh (Business Logic)
-    double val(String key) => double.parse(inputData[key]!);
+    // 3. Kiểm tra logic so sánh
+    double val(String key) => double.tryParse(inputData[key].toString()) ?? 0;
 
-    if (val('sys_min') >= val('sys_max')) errors['sys_min'] = "Tâm thu Min phải nhỏ hơn Max";
-    if (val('dia_min') >= val('dia_max')) errors['dia_min'] = "Tâm trương Min phải nhỏ hơn Max";
-    if (val('sys_min') <= val('dia_min')) errors['sys_min'] = "Tâm thu phải lớn hơn tâm trương";
-    if (val('glu_min') >= val('glu_max')) errors['glu_min'] = "Min phải nhỏ hơn Max";
-    if (val('weight_min') >= val('weight_max')) errors['weight_min'] = "Min phải nhỏ hơn Max";
-    if (val('spo2_min') >= val('spo2_max')) errors['spo2_min'] = "Min phải nhỏ hơn Max";
+    // Huyết áp
+    if (val('sys_min') >= val('sys_max')) errors['sys_min'] = "Min < Max";
+    if (val('dia_min') >= val('dia_max')) errors['dia_min'] = "Min < Max";
+    if (val('sys_max') <= val('dia_max')) {
+      errors['sys_max'] = "Thu > Trương";
+    }
+
+    // Các chỉ số khác
+    if (val('glu_min') >= val('glu_max')) errors['glu_min'] = "Min < Max";
+    if (val('weight_min') >= val('weight_max')) errors['weight_min'] = "Min < Max";
+    if (val('spo2_min') >= val('spo2_max')) errors['spo2_min'] = "Min < Max";
 
     return errors;
   }

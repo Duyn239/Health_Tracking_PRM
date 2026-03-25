@@ -6,7 +6,8 @@ class ThresholdInputField extends StatelessWidget {
   final String unit;
   final bool isEnabled;
   final TextEditingController? controller;
-  final String? errorText; // Thêm tham số nhận thông báo lỗi từ ViewModel
+  final String? errorText;
+  final bool isInteger;
 
   const ThresholdInputField({
     super.key,
@@ -14,7 +15,8 @@ class ThresholdInputField extends StatelessWidget {
     required this.unit,
     this.isEnabled = false,
     this.controller,
-    this.errorText, // Khởi tạo tham số mới
+    this.errorText,
+    this.isInteger = false, // Mặc định là số thực (false)
   });
 
   @override
@@ -26,12 +28,13 @@ class ThresholdInputField extends StatelessWidget {
         children: [
           Text(label, style: const TextStyle(color: Colors.black, fontSize: 13)),
           const SizedBox(height: 4),
-          // Loại bỏ SizedBox có height cố định để nhường chỗ cho errorText hiển thị bên dưới
           TextField(
             enabled: isEnabled,
             controller: controller,
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')), // chỉ cho nhập số và dấu chấm
+              isInteger
+                  ? FilteringTextInputFormatter.digitsOnly // Chặn hoàn toàn dấu chấm/phẩy
+                  : FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,1}')), // Cho phép tối đa 1 số thập phân
             ],
             style: TextStyle(
               color: isEnabled ? Colors.black : Colors.grey.shade600,
@@ -41,27 +44,22 @@ class ThresholdInputField extends StatelessWidget {
               filled: true,
               fillColor: isEnabled ? Colors.white : Colors.grey.shade100,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-
-              // Cấu hình hiển thị lỗi
               errorText: errorText,
               errorStyle: const TextStyle(color: Colors.red, fontSize: 11, height: 0.8),
 
-              // Border mặc định
+              // Borders
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-              // Border khi có lỗi
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Colors.red, width: 1),
               ),
-              // Border khi đang nhập mà vẫn có lỗi
               focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Colors.red, width: 1.5),
               ),
-
               disabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.grey.shade200),
@@ -84,7 +82,10 @@ class ThresholdInputField extends StatelessWidget {
                 ),
               ),
             ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            // Đổi bàn phím tùy theo kiểu số
+            keyboardType: isInteger
+                ? TextInputType.number
+                : const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.next,
           ),
         ],

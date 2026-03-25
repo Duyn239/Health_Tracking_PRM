@@ -150,12 +150,16 @@ class _AlertSettingPageState extends State<AlertSettingPage> {
   }
 
   Widget _buildField(AlertSettingViewModel vm, String label, String unit, String key) {
+    // Logic: Nếu key bắt đầu bằng 'sys' hoặc 'dia' (Huyết áp) thì là số nguyên
+    bool checkInteger = key.startsWith('sys') || key.startsWith('dia');
+
     return ThresholdInputField(
       label: label,
       unit: unit,
       isEnabled: isEditing,
       controller: vm.controllers[key],
       errorText: vm.errors[key],
+      isInteger: checkInteger,
     );
   }
 

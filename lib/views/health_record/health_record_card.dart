@@ -28,7 +28,7 @@ class HealthRecordCard extends StatelessWidget {
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.5),
-      builder: (context) => DeleteRecordModal( record: HealthRecord.fromMap(data)
+      builder: (context) => DeleteRecordModal(record: HealthRecord.fromMap(data)
       ),
     );
   }

@@ -58,14 +58,19 @@ class _EditRecordModalState extends State<EditRecordModal> {
 
   String? _validateRange(String? value, double min, double max, String label) {
     if (value == null || value.trim().isEmpty) {
-      return 'Trống';
+      return 'Vui lòng nhập $label';
     }
     final n = double.tryParse(value);
     if (n == null) {
-      return 'Phải là số';
+      return '$label phải là định dạng số';
     }
     if (n < min || n > max) {
-      return 'Từ $min - $max';
+      // nếu là số nguyên thì đổi sang int để mất .0
+      // Nếu là số thực (như 0.5) thì giữ nguyên
+      String minStr = min == min.toInt() ? min.toInt().toString() : min.toString();
+      String maxStr = max == max.toInt() ? max.toInt().toString() : max.toString();
+
+      return '$label hợp lệ từ $minStr đến $maxStr';
     }
     return null;
   }
@@ -160,14 +165,19 @@ class _EditRecordModalState extends State<EditRecordModal> {
           crossAxisAlignment: CrossAxisAlignment.start, // Căn trên cùng để khi có lỗi không bị lệch hàng
           children: [
             Expanded(
+
+              // input tâm thu
               child: _buildInputField(
                   _val1Controller,
                   "Tâm thu",
                   "mmHg",
-                      (v) => _validateRange(v, 70, 200, 'tâm thu')
+                      (v) => _validateRange(v, 70, 200, 'tâm thu'),
+                  isInteger: true
               ),
             ),
             const SizedBox(width: 10),
+
+            // input tâm trương
             Expanded(
               child: _buildInputField(
                   _val2Controller,
@@ -180,12 +190,15 @@ class _EditRecordModalState extends State<EditRecordModal> {
                     final dia = double.tryParse(v!) ?? 0;
                     if (dia >= sys && sys > 0) return 'Phải < Thu';
                     return null;
-                  }
+                  },
+                  isInteger: true
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
+
+        // input nhịp tim
         _buildInputField(
             _val3Controller,
             "Nhịp tim",
@@ -232,8 +245,9 @@ class _EditRecordModalState extends State<EditRecordModal> {
               : const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             isInteger
-                ? FilteringTextInputFormatter.digitsOnly
-                : FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                ? FilteringTextInputFormatter
+                .digitsOnly // Chặn mọi ký tự không phải số (bao gồm dấu . và ,)
+                : FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,1}')),
           ],
           decoration: _inputDecoration(hint: hint),
           validator: validator,
@@ -276,7 +290,22 @@ class _EditRecordModalState extends State<EditRecordModal> {
     return TextFormField(
       controller: _noteController,
       maxLines: 2,
-      decoration: _inputDecoration(hint: "Nhập ghi chú..."),
+      // 1. Chặn không cho gõ quá 100 ký tự (Số sẽ hiện ở góc dưới)
+      maxLength: 50,
+      decoration: InputDecoration(
+        hintText: 'Nhập tình trạng sức khỏe hiện tại...',
+        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        // 2. Tùy chỉnh dòng đếm ký tự (tùy chọn)
+        counterStyle: const TextStyle(fontSize: 11),
+      ),
+      // 3. Validator để kiểm tra khi nhấn Lưu
+      validator: (v) {
+        if (v != null && v.length > 50) {
+          return "Ghi chú không được quá 50 ký tự";
+        }
+        return null;
+      },
     );
   }
 

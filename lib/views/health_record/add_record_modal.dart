@@ -43,7 +43,12 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
       return '$label phải là định dạng số';
     }
     if (n < min || n > max) {
-      return '$label hợp lệ từ $min đến $max';
+      // nếu là số nguyên thì đổi sang int để mất .0
+      // Nếu là số thực (như 0.5) thì giữ nguyên
+      String minStr = min == min.toInt() ? min.toInt().toString() : min.toString();
+      String maxStr = max == max.toInt() ? max.toInt().toString() : max.toString();
+
+      return '$label hợp lệ từ $minStr đến $maxStr';
     }
     return null;
   }
@@ -139,19 +144,22 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
+              //input tâm thu
               Expanded(
                 child: _buildInputField(
                   'Tâm thu',
                   'mmHg',
                   _val1Controller,
                   (v) => _validateRange(v, 70, 200, 'chỉ số tâm thu'),
+                  isIntegerOnly: true,
                 ),
               ),
               const SizedBox(width: 10),
+
+              // input tâm trương
               Expanded(
-                child: _buildInputField('Tâm trương', 'mmHg', _val2Controller, (
-                  v,
-                ) {
+                child: _buildInputField('Tâm trương', 'mmHg', _val2Controller, (v) {
                   final err = _validateRange(v, 40, 130, 'chỉ số tâm trương');
                   if (err != null) return err;
 
@@ -162,11 +170,16 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
                     return 'Tâm trương phải nhỏ hơn tâm thu';
                   }
                   return null;
-                }),
+                },
+                  isIntegerOnly: true,
+                ),
+
               ),
             ],
           ),
           const SizedBox(height: 16),
+
+          // input nhịp tim
           _buildInputField(
             'Nhịp tim',
             'bpm',
@@ -228,7 +241,7 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
             isIntegerOnly
                 ? FilteringTextInputFormatter
                       .digitsOnly // Chặn mọi ký tự không phải số (bao gồm dấu . và ,)
-                : FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                : FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,1}')),
           ],
           decoration: InputDecoration(
             hintText: hint,
@@ -337,11 +350,22 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
     return TextFormField(
       controller: _noteController,
       maxLines: 2,
+      // 1. Chặn không cho gõ quá 100 ký tự (Số sẽ hiện ở góc dưới)
+      maxLength: 50,
       decoration: InputDecoration(
         hintText: 'Nhập tình trạng sức khỏe hiện tại...',
         hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        // 2. Tùy chỉnh dòng đếm ký tự (tùy chọn)
+        counterStyle: const TextStyle(fontSize: 11),
       ),
+      // 3. Validator để kiểm tra khi nhấn Lưu
+      validator: (v) {
+        if (v != null && v.length > 50) {
+          return "Ghi chú không được quá 50 ký tự";
+        }
+        return null;
+      },
     );
   }
 
@@ -431,11 +455,22 @@ class _ModalAddRecordState extends State<ModalAddRecord> {
         // Cập nhật Badge ngay lập tức
         await notificationVM.refreshUnreadCount(accountId);
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Lưu thành công!")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Text("Tạo bản ghi thành công !!"),
+              ],
+            ),
+            backgroundColor: Colors.green.shade600,
+          ),
+        );
         Navigator.pop(context);
       }
+
+
     }
   }
 
